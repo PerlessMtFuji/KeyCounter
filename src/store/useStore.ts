@@ -12,6 +12,25 @@ import {
 import { generateMock } from "@/data/mock";
 import { daysAgo } from "@/lib/format";
 import type { LayoutId } from "@/lib/layouts";
+import type { Lang } from "@/lib/i18n";
+
+type Theme = "dark" | "light";
+
+function readLocalStorage<T extends string>(
+  key: string,
+  fallback: T,
+  allowed: readonly T[],
+): T {
+  if (typeof localStorage === "undefined") return fallback;
+  const v = localStorage.getItem(key);
+  return v && (allowed as readonly string[]).includes(v) ? (v as T) : fallback;
+}
+
+function applyTheme(theme: Theme) {
+  if (typeof document === "undefined") return;
+  document.documentElement.classList.toggle("theme-light", theme === "light");
+  document.documentElement.classList.toggle("theme-dark", theme === "dark");
+}
 
 export type View =
   | "dashboard"
@@ -64,6 +83,12 @@ interface AppState {
   // Layout
   layout: LayoutId;
   setLayout: (l: LayoutId) => void;
+
+  // Appearance + i18n
+  theme: Theme;
+  setTheme: (t: Theme) => void;
+  lang: Lang;
+  setLang: (l: Lang) => void;
 
   // Demo / mock-only mode (true when not running inside Tauri)
   demo: boolean;
@@ -251,14 +276,36 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
-  layout: (typeof localStorage !== "undefined"
-    ? (localStorage.getItem("kc-layout") as LayoutId | null)
-    : null) || "qwerty",
+  layout: readLocalStorage<LayoutId>(
+    "kc-layout",
+    "qwerty",
+    ["qwerty", "qwertz", "dvorak", "colemak"],
+  ),
   setLayout: (l) => {
     if (typeof localStorage !== "undefined") {
       localStorage.setItem("kc-layout", l);
     }
     set({ layout: l });
+  },
+
+  theme: (() => {
+    const t = readLocalStorage<Theme>("kc-theme", "dark", ["dark", "light"]);
+    applyTheme(t);
+    return t;
+  })(),
+  setTheme: (t) => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("kc-theme", t);
+    }
+    applyTheme(t);
+    set({ theme: t });
+  },
+  lang: readLocalStorage<Lang>("kc-lang", "en", ["en", "pl"]),
+  setLang: (l) => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("kc-lang", l);
+    }
+    set({ lang: l });
   },
 
   demo: !isTauri(),

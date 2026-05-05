@@ -4,6 +4,7 @@ import { KEYBOARD_60 } from "./keyboard-layout";
 import { formatNumber } from "@/lib/format";
 import { keyLabel } from "@/lib/keycode";
 import { LAYOUT_OVERRIDES, type LayoutId } from "@/lib/layouts";
+import { useStore } from "@/store/useStore";
 
 interface Props {
   counts: Record<number, number>;
@@ -15,8 +16,16 @@ const GAP = 4;
 const KEY_HEIGHT = 44;
 
 export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
+  const theme = useStore((s) => s.theme);
   const overrides = LAYOUT_OVERRIDES[layout];
   const max = Math.max(1, ...Object.values(counts));
+  // Slightly different RGB and alpha curve per theme so saturated keys
+  // remain readable against either background.
+  const keyRgb = theme === "light" ? "109, 77, 255" : "140, 110, 255";
+  const idleFill =
+    theme === "light" ? "rgba(15,23,42,0.04)" : "rgba(255,255,255,0.025)";
+  const baseAlpha = theme === "light" ? 0.1 : 0.18;
+  const peakAlpha = theme === "light" ? 0.85 : 0.78;
   const [hovered, setHovered] = useState<{
     code: number;
     count: number;
@@ -53,11 +62,11 @@ export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
               const intensity = Math.pow(ratio, 0.45);
               const fill =
                 count === 0
-                  ? "rgba(255,255,255,0.025)"
-                  : `rgba(140, 110, 255, ${0.18 + intensity * 0.78})`;
+                  ? idleFill
+                  : `rgba(${keyRgb}, ${baseAlpha + intensity * peakAlpha})`;
               const glow =
                 intensity > 0.4
-                  ? `0 0 ${10 + intensity * 22}px rgba(140,110,255,${intensity * 0.7})`
+                  ? `0 0 ${10 + intensity * 22}px rgba(${keyRgb},${intensity * 0.7})`
                   : "none";
               return (
                 <motion.div
@@ -85,7 +94,7 @@ export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
                     });
                   }}
                   onMouseLeave={() => setHovered(null)}
-                  className="relative flex cursor-pointer items-center justify-center rounded-lg border border-white/[0.08] text-[11px] font-medium text-white/85 transition-transform duration-200 hover:scale-[1.06]"
+                  className="relative flex cursor-pointer items-center justify-center rounded-lg border border-[var(--color-glass-stroke)] text-[11px] font-medium text-[var(--color-text-primary)] transition-transform duration-200 hover:scale-[1.06]"
                   style={{
                     width: w,
                     height: KEY_HEIGHT,
@@ -106,7 +115,7 @@ export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
           initial={{ opacity: 0, y: hovered.above ? 4 : -4 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
-          className="pointer-events-none fixed z-50 rounded-xl border border-white/[0.1] bg-[#14141c]/95 px-3 py-2 text-xs shadow-2xl backdrop-blur-xl"
+          className="pointer-events-none fixed z-50 rounded-xl border border-[var(--color-glass-stroke)] bg-[var(--color-bg-elevated)] px-3 py-2 text-xs shadow-2xl backdrop-blur-xl"
           style={{
             left: hovered.x,
             top: hovered.y + (hovered.above ? -10 : 10),
@@ -115,8 +124,10 @@ export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
               : "translate(-50%, 0)",
           }}
         >
-          <div className="font-semibold text-white">{hovered.label}</div>
-          <div className="mt-0.5 tabular-nums text-white/65">
+          <div className="font-semibold text-[var(--color-text-primary)]">
+            {hovered.label}
+          </div>
+          <div className="mt-0.5 tabular-nums text-[var(--color-text-muted)]">
             {formatNumber(hovered.count)} presses
           </div>
         </motion.div>

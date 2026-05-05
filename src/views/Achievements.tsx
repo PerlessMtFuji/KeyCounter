@@ -3,10 +3,32 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { useStore } from "@/store/useStore";
 import { formatNumber } from "@/lib/format";
 import { deriveAchievements } from "@/lib/derived";
+import { useT, type TranslationKey } from "@/lib/i18n";
+
+const TITLE_KEY: Record<string, TranslationKey> = {
+  first_100: "ach.firstStepsTitle",
+  ten_k: "ach.warmingUpTitle",
+  hundred_k: "ach.cruiseTitle",
+  one_m: "ach.millionTitle",
+  ten_m: "ach.deciTitle",
+  streak_7: "ach.weeklongTitle",
+  streak_30: "ach.marathonTitle",
+};
+
+const DESC_KEY: Record<string, TranslationKey> = {
+  first_100: "ach.firstStepsDesc",
+  ten_k: "ach.warmingUpDesc",
+  hundred_k: "ach.cruiseDesc",
+  one_m: "ach.millionDesc",
+  ten_m: "ach.deciDesc",
+  streak_7: "ach.weeklongDesc",
+  streak_30: "ach.marathonDesc",
+};
 
 export function Achievements() {
   const lifetime = useStore((s) => s.lifetime);
   const streak = useStore((s) => s.streak);
+  const t = useT();
   const achievements = deriveAchievements(lifetime, streak);
   const earned = achievements.filter((a) => a.earned).length;
 
@@ -19,10 +41,11 @@ export function Achievements() {
           transition={{ duration: 0.5 }}
           className="text-3xl font-semibold tracking-tight"
         >
-          Achievements
+          {t("ach.title")}
         </motion.h1>
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-          {earned} of {achievements.length} unlocked
+          {earned} {t("common.of")} {achievements.length}{" "}
+          {t("common.unlocked")}
         </p>
       </div>
 
@@ -34,15 +57,17 @@ export function Achievements() {
                 className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border text-2xl ${
                   a.earned
                     ? "border-amber-300/40 bg-gradient-to-br from-amber-300/30 to-orange-400/20 shadow-lg shadow-amber-400/10"
-                    : "border-white/[0.06] bg-white/[0.02] opacity-50"
+                    : "border-[var(--color-glass-stroke)] bg-white/[0.02] opacity-50"
                 }`}
               >
                 {a.earned ? "★" : "☆"}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold">{a.title}</div>
+                <div className="text-sm font-semibold">
+                  {t(TITLE_KEY[a.id] ?? ("ach.firstStepsTitle" as TranslationKey))}
+                </div>
                 <div className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">
-                  {a.description}
+                  {t(DESC_KEY[a.id] ?? ("ach.firstStepsDesc" as TranslationKey))}
                 </div>
                 {!a.earned && (
                   <div className="mt-3">
@@ -59,7 +84,7 @@ export function Achievements() {
                       />
                     </div>
                     <div className="mt-1 text-[10px] tabular-nums text-[var(--color-text-muted)]">
-                      {Math.round(a.progress * 100)}% · target{" "}
+                      {Math.round(a.progress * 100)}% · {t("common.target")}{" "}
                       {formatNumber(a.threshold)}
                     </div>
                   </div>

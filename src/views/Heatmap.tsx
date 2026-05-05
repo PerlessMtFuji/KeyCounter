@@ -9,12 +9,13 @@ import { useStore } from "@/store/useStore";
 import { formatNumber } from "@/lib/format";
 import { fingerLoad } from "@/lib/fingerMap";
 import { LAYOUT_NAMES, type LayoutId } from "@/lib/layouts";
+import { useT, type TranslationKey } from "@/lib/i18n";
 
-const RANGES: { id: "today" | "7d" | "30d" | "all"; label: string }[] = [
-  { id: "today", label: "Today" },
-  { id: "7d", label: "7d" },
-  { id: "30d", label: "30d" },
-  { id: "all", label: "All" },
+const RANGES: { id: "today" | "7d" | "30d" | "all"; key: TranslationKey }[] = [
+  { id: "today", key: "common.today" },
+  { id: "7d", key: "common.last7" },
+  { id: "30d", key: "common.last30" },
+  { id: "all", key: "common.all" },
 ];
 
 export function Heatmap() {
@@ -28,6 +29,7 @@ export function Heatmap() {
   const refreshAll = useStore((s) => s.refreshAll);
   const layout = useStore((s) => s.layout);
   const setLayout = useStore((s) => s.setLayout);
+  const t = useT();
 
   // Always refetch heatmap data when this view becomes visible. The other
   // views are dashboard-only and refresh from the global timer.
@@ -57,10 +59,10 @@ export function Heatmap() {
             transition={{ duration: 0.5 }}
             className="text-3xl font-semibold tracking-tight"
           >
-            Keyboard heatmap
+            {t("heatmap.title")}
           </motion.h1>
           <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-            Where your fingers actually go.
+            {t("heatmap.subtitle")}
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -82,8 +84,8 @@ export function Heatmap() {
                 onClick={() => setHeatmapRange(r.id)}
                 className={`relative rounded-lg px-3 py-1.5 transition ${
                   heatmapRange === r.id
-                    ? "text-white"
-                    : "text-[var(--color-text-muted)] hover:text-white"
+                    ? "text-[var(--color-text-primary)]"
+                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
                 }`}
               >
                 {heatmapRange === r.id && (
@@ -93,7 +95,7 @@ export function Heatmap() {
                     transition={{ type: "spring", stiffness: 500, damping: 40 }}
                   />
                 )}
-                <span className="relative">{r.label}</span>
+                <span className="relative">{t(r.key)}</span>
               </button>
             ))}
           </div>
@@ -104,33 +106,35 @@ export function Heatmap() {
         <div className="flex items-baseline justify-between">
           <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
             {LAYOUT_NAMES[layout]} ·{" "}
-            {RANGES.find((r) => r.id === heatmapRange)?.label}
+            {t(
+              (RANGES.find((r) => r.id === heatmapRange)?.key ??
+                "common.last30") as TranslationKey,
+            )}
           </div>
           <div className="text-xs text-[var(--color-text-muted)]">
-            <span className="text-white tabular-nums">
+            <span className="text-[var(--color-text-primary)] tabular-nums">
               {formatNumber(total)}
             </span>{" "}
-            total presses
+            {t("common.totalPresses")}
           </div>
         </div>
         <div className="mt-6 flex justify-center overflow-x-auto pb-4">
           <KeyboardHeatmap counts={counts} layout={layout} />
         </div>
         <div className="mt-4 flex items-center justify-center gap-3 text-[10px] text-[var(--color-text-muted)]">
-          <span>less</span>
+          <span>{t("common.less")}</span>
           <div className="h-1.5 w-40 rounded-full bg-gradient-to-r from-violet-500/10 via-violet-500/40 to-violet-400" />
-          <span>more</span>
+          <span>{t("common.more")}</span>
         </div>
       </GlassCard>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <GlassCard delay={0.18}>
           <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-            Finger load · {LAYOUT_NAMES[layout]} touch-typing
+            {t("heatmap.fingerLoad", { layout: LAYOUT_NAMES[layout] })}
           </div>
           <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
-            Assumes standard finger assignment. Consider remapping if any
-            finger is doing too much work.
+            {t("heatmap.fingerLoadHint")}
           </p>
           <div className="mt-4">
             <FingerLoad load={fingers} />
@@ -139,7 +143,7 @@ export function Heatmap() {
 
         <GlassCard delay={0.22}>
           <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-            When you type · day × hour · last 30 days
+            {t("heatmap.punchCard")}
           </div>
           <div className="mt-5">
             <PunchCard data={punchCard} />
@@ -149,7 +153,7 @@ export function Heatmap() {
 
       <GlassCard delay={0.3}>
         <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-          Activity calendar · last 365 days
+          {t("heatmap.calendar")}
         </div>
         <div className="mt-5 overflow-x-auto">
           <StreakCalendar data={calendar} />

@@ -122,9 +122,11 @@ export function StreakCalendar({ data, days = 365 }: Props) {
       <div className="mt-2 h-[14px] text-[10px] text-[var(--color-text-muted)]">
         {hover ? (
           <>
-            <span className="font-mono text-white">{hover.day}</span>
+            <span className="font-mono text-[var(--color-text-primary)]">
+              {hover.day}
+            </span>
             {" · "}
-            <span className="tabular-nums text-white">
+            <span className="tabular-nums text-[var(--color-text-primary)]">
               {formatNumber(hover.total)}
             </span>{" "}
             keystrokes

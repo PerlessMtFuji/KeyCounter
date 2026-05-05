@@ -6,6 +6,7 @@ import { api, isTauri } from "@/lib/api";
 import { recordPulse, useStore } from "@/store/useStore";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { formatNumber } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 
 // Standalone window: minimal always-on-top KPM/today display.
 // Each Tauri window has its own JS context, so we re-hydrate the store
@@ -16,6 +17,7 @@ export function Widget() {
   const pulseTick = useStore((s) => s.pulseTick);
   const todayTotal = useStore((s) => s.today?.total ?? 0);
   const paused = useStore((s) => s.paused);
+  const t = useT();
 
   // Subscribe to live-pulse events (broadcast by backend to all windows)
   useEffect(() => {
@@ -164,7 +166,7 @@ export function Widget() {
       >
         <div data-tauri-drag-region>
           <div className="text-[9px] tracking-wider text-[var(--color-text-muted)] uppercase">
-            KPM
+            {t("widget.kpm")}
           </div>
           <div className="bg-gradient-to-r from-violet-300 to-sky-300 bg-clip-text text-3xl font-semibold tabular-nums tracking-tight text-transparent leading-none">
             <AnimatedNumber
@@ -176,7 +178,7 @@ export function Widget() {
         </div>
         <div data-tauri-drag-region className="text-right">
           <div className="text-[9px] tracking-wider text-[var(--color-text-muted)] uppercase">
-            Today
+            {t("widget.today")}
           </div>
           <div className="text-base font-semibold tabular-nums leading-none">
             <AnimatedNumber value={todayTotal} format={formatNumber} />

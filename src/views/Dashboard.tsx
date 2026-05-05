@@ -7,6 +7,7 @@ import { Sparkline } from "@/components/charts/Sparkline";
 import { useStore } from "@/store/useStore";
 import { formatNumber } from "@/lib/format";
 import { keyLabel } from "@/lib/keycode";
+import { useT } from "@/lib/i18n";
 
 export function Dashboard() {
   const today = useStore((s) => s.today);
@@ -18,6 +19,7 @@ export function Dashboard() {
   const lifetime = useStore((s) => s.lifetime);
   const liveKpm = useStore((s) => s.liveKpm);
   const demo = useStore((s) => s.demo);
+  const t = useT();
 
   const todayTotal = today?.total ?? 0;
   const weekTotal = range7?.total ?? 0;
@@ -43,7 +45,7 @@ export function Dashboard() {
           transition={{ duration: 0.5 }}
           className="text-3xl font-semibold tracking-tight"
         >
-          Dashboard
+          {t("dashboard.title")}
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
@@ -52,40 +54,40 @@ export function Dashboard() {
           className="mt-1 text-sm text-[var(--color-text-muted)]"
         >
           {isFresh
-            ? "Type something — your stats appear here in real time."
-            : "Snapshot of your typing activity. All numbers stay on this machine."}
+            ? t("dashboard.subtitleFresh")
+            : t("dashboard.subtitleNormal")}
         </motion.p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
-          label="Today"
+          label={t("common.today")}
           value={todayTotal}
-          unit="keys"
+          unit={t("common.keys")}
           delay={0.05}
           accent="from-violet-400 to-fuchsia-400"
         />
         <StatCard
-          label="KPM"
+          label={t("common.kpm")}
           value={kpm}
-          unit="/ min"
-          hint="Live · last minute"
+          unit={t("common.perMin")}
+          hint={t("dashboard.kpmHint")}
           delay={0.1}
           accent="from-sky-400 to-cyan-300"
           format={(n) => Math.round(n).toString()}
         />
         <StatCard
-          label="Streak"
+          label={t("dashboard.streak")}
           value={streak}
-          unit="days"
+          unit={t("common.days")}
           delay={0.15}
           accent="from-amber-300 to-orange-400"
           format={(n) => Math.round(n).toString()}
         />
         <StatCard
-          label="Lifetime"
+          label={t("dashboard.lifetime")}
           value={lifetime}
-          unit="keys"
+          unit={t("common.keys")}
           delay={0.2}
           accent="from-emerald-300 to-teal-300"
         />
@@ -96,21 +98,21 @@ export function Dashboard() {
           <div className="flex items-baseline justify-between">
             <div>
               <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-                Last 30 days
+                {t("dashboard.last30")}
               </div>
               <div className="mt-1 text-2xl font-semibold tabular-nums">
                 <AnimatedNumber value={monthTotal} />
                 <span className="ml-2 text-sm font-normal text-[var(--color-text-muted)]">
-                  keys
+                  {t("common.keys")}
                 </span>
               </div>
             </div>
             <div className="text-xs text-[var(--color-text-muted)]">
-              avg{" "}
-              <span className="text-white tabular-nums">
+              {t("common.avg")}{" "}
+              <span className="text-[var(--color-text-primary)] tabular-nums">
                 {formatNumber(Math.round(monthTotal / 30))}
               </span>{" "}
-              / day
+              {t("common.perDay")}
             </div>
           </div>
           <div className="mt-4">
@@ -120,7 +122,7 @@ export function Dashboard() {
 
         <GlassCard delay={0.3}>
           <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-            7-day trend
+            {t("dashboard.trend7")}
           </div>
           <div className="mt-1 text-2xl font-semibold tabular-nums">
             <AnimatedNumber value={weekTotal} />
@@ -143,12 +145,12 @@ export function Dashboard() {
       <div className="grid gap-4 lg:grid-cols-2">
         <GlassCard delay={0.35}>
           <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-            Top 5 keys · last 30 days
+            {t("dashboard.top5")}
           </div>
           <div className="mt-4 space-y-3">
             {top5.length === 0 ? (
               <div className="py-8 text-center text-sm text-[var(--color-text-muted)]">
-                No data yet.
+                {t("common.noData")}
               </div>
             ) : (
               top5.map((k, i) => {
@@ -161,7 +163,7 @@ export function Dashboard() {
                     transition={{ duration: 0.5, delay: 0.45 + i * 0.06 }}
                     className="flex items-center gap-3"
                   >
-                    <div className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[var(--color-accent-soft)] px-2 text-xs font-semibold whitespace-nowrap">
+                    <div className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--color-glass-stroke)] bg-[var(--color-accent-soft)] px-2 text-xs font-semibold whitespace-nowrap">
                       {keyLabel(k.code)}
                     </div>
                     <div className="flex-1">
@@ -190,7 +192,7 @@ export function Dashboard() {
 
         <GlassCard delay={0.4}>
           <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-            Today by hour
+            {t("dashboard.byHour")}
           </div>
           <div className="mt-4">
             <BarChart

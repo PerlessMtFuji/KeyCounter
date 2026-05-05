@@ -7,6 +7,7 @@ import { LAYOUT_NAMES, type LayoutId } from "@/lib/layouts";
 import { invoke } from "@tauri-apps/api/core";
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { useT, type Lang } from "@/lib/i18n";
 
 interface ToggleProps {
   label: string;
@@ -49,12 +50,17 @@ export function Settings() {
   const togglePaused = useStore((s) => s.togglePaused);
   const layout = useStore((s) => s.layout);
   const setLayout = useStore((s) => s.setLayout);
+  const theme = useStore((s) => s.theme);
+  const setTheme = useStore((s) => s.setTheme);
+  const lang = useStore((s) => s.lang);
+  const setLang = useStore((s) => s.setLang);
   const refreshAll = useStore((s) => s.refreshAll);
   const [autostart, setAutostart] = useState(false);
   const [dbPath, setDbPath] = useState<string>("");
   const [version, setVersion] = useState<string>("");
   const [confirmReset, setConfirmReset] = useState(false);
   const [busy, setBusy] = useState(false);
+  const t = useT();
 
   useEffect(() => {
     if (!isTauri()) {
@@ -66,7 +72,9 @@ export function Settings() {
       setDbPath(info.db_path);
       setVersion(info.version);
     });
-    invoke<boolean>("plugin:autostart|is_enabled").then(setAutostart).catch(() => {});
+    invoke<boolean>("plugin:autostart|is_enabled")
+      .then(setAutostart)
+      .catch(() => {});
   }, []);
 
   async function onAutostartChange(v: boolean) {
@@ -119,27 +127,27 @@ export function Settings() {
           transition={{ duration: 0.5 }}
           className="text-3xl font-semibold tracking-tight"
         >
-          Settings
+          {t("settings.title")}
         </motion.h1>
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-          Everything stays on this machine.
+          {t("settings.subtitle")}
         </p>
       </div>
 
       <GlassCard delay={0.05}>
         <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-          Recording
+          {t("settings.recording")}
         </div>
         <div className="mt-2 divide-y divide-white/[0.04]">
           <Toggle
-            label="Pause counting"
-            hint="Hook stays installed; events are silently dropped."
+            label={t("settings.pauseLabel")}
+            hint={t("settings.pauseHint")}
             value={paused}
             onChange={togglePaused}
           />
           <Toggle
-            label="Start with system"
-            hint="Launch KeyCounter when you log in."
+            label={t("settings.autostartLabel")}
+            hint={t("settings.autostartHint")}
             value={autostart}
             onChange={onAutostartChange}
             disabled={!isTauri()}
@@ -149,21 +157,60 @@ export function Settings() {
 
       <GlassCard delay={0.1}>
         <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-          Display
+          {t("settings.display")}
         </div>
         <div className="mt-2 divide-y divide-white/[0.04]">
           <div className="flex items-center justify-between py-3">
             <div>
-              <div className="text-sm">Keyboard layout</div>
+              <div className="text-sm">{t("settings.themeLabel")}</div>
+            </div>
+            <div className="flex rounded-lg border border-[var(--color-glass-stroke)] bg-white/[0.02] p-0.5 text-xs">
+              {(["dark", "light"] as const).map((k) => (
+                <button
+                  key={k}
+                  onClick={() => setTheme(k)}
+                  className={`rounded-md px-3 py-1.5 transition ${
+                    theme === k
+                      ? "bg-[var(--color-accent-soft)] text-[var(--color-text-primary)]"
+                      : "text-[var(--color-text-muted)]"
+                  }`}
+                >
+                  {k === "dark" ? t("settings.themeDark") : t("settings.themeLight")}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <div className="text-sm">{t("settings.langLabel")}</div>
+            </div>
+            <div className="flex rounded-lg border border-[var(--color-glass-stroke)] bg-white/[0.02] p-0.5 text-xs">
+              {(["en", "pl"] as Lang[]).map((k) => (
+                <button
+                  key={k}
+                  onClick={() => setLang(k)}
+                  className={`rounded-md px-3 py-1.5 transition ${
+                    lang === k
+                      ? "bg-[var(--color-accent-soft)] text-[var(--color-text-primary)]"
+                      : "text-[var(--color-text-muted)]"
+                  }`}
+                >
+                  {k === "en" ? t("settings.langEn") : t("settings.langPl")}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <div className="text-sm">{t("settings.layoutLabel")}</div>
               <div className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">
-                Affects how labels are drawn on the heatmap. Counts are
-                physical-position based and never change.
+                {t("settings.layoutHint")}
               </div>
             </div>
             <select
               value={layout}
               onChange={(e) => setLayout(e.target.value as LayoutId)}
-              className="cursor-pointer rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs outline-none"
+              className="cursor-pointer rounded-lg border border-[var(--color-glass-stroke)] bg-white/[0.03] px-3 py-1.5 text-xs outline-none"
             >
               {(Object.keys(LAYOUT_NAMES) as LayoutId[]).map((id) => (
                 <option key={id} value={id} className="bg-zinc-900">
@@ -177,12 +224,12 @@ export function Settings() {
 
       <GlassCard delay={0.15}>
         <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-          Data
+          {t("settings.data")}
         </div>
         <div className="mt-2 divide-y divide-white/[0.04]">
           <div className="flex items-center justify-between py-3">
             <div>
-              <div className="text-sm">Database location</div>
+              <div className="text-sm">{t("settings.dbPath")}</div>
               <div className="mt-0.5 break-all font-mono text-[11px] text-[var(--color-text-muted)]">
                 {dbPath}
               </div>
@@ -190,24 +237,24 @@ export function Settings() {
           </div>
           <div className="flex items-center justify-between py-3">
             <div>
-              <div className="text-sm">Export</div>
+              <div className="text-sm">{t("settings.exportLabel")}</div>
               <div className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">
-                Save all counters to a JSON file.
+                {t("settings.exportHint")}
               </div>
             </div>
             <button
               onClick={onExport}
               disabled={!isTauri() || busy}
-              className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-medium transition hover:bg-white/[0.06] disabled:opacity-40"
+              className="rounded-lg border border-[var(--color-glass-stroke)] bg-white/[0.03] px-3 py-1.5 text-xs font-medium transition hover:bg-white/[0.06] disabled:opacity-40"
             >
-              Export…
+              {t("settings.exportButton")}
             </button>
           </div>
           <div className="flex items-center justify-between py-3">
             <div>
-              <div className="text-sm">Reset all data</div>
+              <div className="text-sm">{t("settings.resetLabel")}</div>
               <div className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">
-                Wipes the local database. Cannot be undone.
+                {t("settings.resetHint")}
               </div>
             </div>
             {!confirmReset ? (
@@ -216,22 +263,22 @@ export function Settings() {
                 disabled={!isTauri()}
                 className="rounded-lg border border-rose-400/30 bg-rose-400/10 px-3 py-1.5 text-xs font-medium text-rose-300 transition hover:bg-rose-400/20 disabled:opacity-40"
               >
-                Reset
+                {t("settings.resetButton")}
               </button>
             ) : (
               <div className="flex gap-2">
                 <button
                   onClick={() => setConfirmReset(false)}
-                  className="rounded-lg border border-white/[0.08] px-3 py-1.5 text-xs"
+                  className="rounded-lg border border-[var(--color-glass-stroke)] px-3 py-1.5 text-xs"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   onClick={onReset}
                   disabled={busy}
                   className="rounded-lg border border-rose-400/40 bg-rose-500/30 px-3 py-1.5 text-xs font-medium text-rose-100 disabled:opacity-40"
                 >
-                  Confirm reset
+                  {t("settings.confirmReset")}
                 </button>
               </div>
             )}
@@ -241,20 +288,26 @@ export function Settings() {
 
       <GlassCard delay={0.2}>
         <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-          About
+          {t("settings.about")}
         </div>
         <div className="mt-3 space-y-1.5 text-sm">
           <div className="flex justify-between">
-            <span className="text-[var(--color-text-muted)]">Version</span>
+            <span className="text-[var(--color-text-muted)]">
+              {t("settings.version")}
+            </span>
             <span className="tabular-nums">{version || "—"}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[var(--color-text-muted)]">License</span>
+            <span className="text-[var(--color-text-muted)]">
+              {t("settings.license")}
+            </span>
             <span>MIT</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[var(--color-text-muted)]">Privacy</span>
-            <span>counts only · no network</span>
+            <span className="text-[var(--color-text-muted)]">
+              {t("settings.privacy")}
+            </span>
+            <span>{t("settings.privacyValue")}</span>
           </div>
         </div>
       </GlassCard>

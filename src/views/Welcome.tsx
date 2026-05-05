@@ -1,12 +1,14 @@
 import { motion } from "framer-motion";
 import { open } from "@tauri-apps/plugin-shell";
 import { useStore } from "@/store/useStore";
+import { useT } from "@/lib/i18n";
 
 const MAC_PRIVACY_URL =
   "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility";
 
 export function Welcome() {
   const checkPermissions = useStore((s) => s.checkPermissions);
+  const t = useT();
 
   return (
     <div className="bg-fallback noise relative flex h-full w-full items-center justify-center overflow-hidden p-8">
@@ -23,39 +25,33 @@ export function Welcome() {
             </svg>
           </div>
           <span className="text-xs font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-            One-time setup
+            {t("welcome.tag")}
           </span>
         </div>
 
         <h1 className="mt-6 text-3xl font-semibold tracking-tight">
-          KeyCounter needs Accessibility permission
+          {t("welcome.title")}
         </h1>
 
         <div className="mt-4 space-y-3 text-sm leading-relaxed text-[var(--color-text-muted)]">
-          <p>
-            macOS requires explicit user permission for any app that observes
-            global keyboard input — this is the same primitive a keylogger
-            would use, so the OS forces a deliberate opt-in.
-          </p>
-          <p>
-            KeyCounter only counts presses; it never stores characters,
-            words, or sequences. The implementation is one small file you
-            can read on GitHub.
-          </p>
+          <p>{t("welcome.body1")}</p>
+          <p>{t("welcome.body2")}</p>
         </div>
 
         <ol className="mt-6 space-y-3 text-sm">
-          {[
-            "Click “Open System Settings” below.",
-            "Find KeyCounter in the Accessibility list.",
-            "Toggle it on. macOS may ask you to quit and re-launch.",
-            "Come back and click “I granted access”.",
-          ].map((step, i) => (
-            <li key={i} className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-[var(--color-accent-soft)] text-xs font-semibold">
+          {(
+            [
+              "welcome.step1",
+              "welcome.step2",
+              "welcome.step3",
+              "welcome.step4",
+            ] as const
+          ).map((key, i) => (
+            <li key={key} className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--color-glass-stroke)] bg-[var(--color-accent-soft)] text-xs font-semibold">
                 {i + 1}
               </span>
-              <span>{step}</span>
+              <span>{t(key)}</span>
             </li>
           ))}
         </ol>
@@ -65,13 +61,13 @@ export function Welcome() {
             onClick={() => open(MAC_PRIVACY_URL).catch(console.error)}
             className="rounded-xl bg-[var(--color-accent)] px-5 py-2.5 text-sm font-medium text-white transition hover:brightness-110"
           >
-            Open System Settings
+            {t("welcome.openButton")}
           </button>
           <button
             onClick={() => checkPermissions()}
-            className="rounded-xl border border-[var(--color-glass-stroke)] px-5 py-2.5 text-sm font-medium text-[var(--color-text-muted)] transition hover:text-white"
+            className="rounded-xl border border-[var(--color-glass-stroke)] px-5 py-2.5 text-sm font-medium text-[var(--color-text-muted)] transition hover:text-[var(--color-text-primary)]"
           >
-            I granted access
+            {t("welcome.recheckButton")}
           </button>
         </div>
       </motion.div>

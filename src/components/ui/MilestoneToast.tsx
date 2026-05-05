@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useStore } from "@/store/useStore";
 import { formatNumber } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 
 const THRESHOLDS = [
   100, 1_000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000,
@@ -14,6 +15,7 @@ interface Toast {
 
 export function MilestoneToast() {
   const lifetime = useStore((s) => s.lifetime);
+  const t = useT();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const lastSeen = useRef<number | null>(null);
   const idCounter = useRef(0);
@@ -44,9 +46,9 @@ export function MilestoneToast() {
   return (
     <div className="pointer-events-none fixed right-6 bottom-6 z-50 flex flex-col gap-3">
       <AnimatePresence>
-        {toasts.map((t) => (
+        {toasts.map((toast) => (
           <motion.div
-            key={t.id}
+            key={toast.id}
             initial={{ opacity: 0, x: 80, scale: 0.9 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 80, scale: 0.95 }}
@@ -60,13 +62,13 @@ export function MilestoneToast() {
               </div>
               <div>
                 <div className="text-[10px] font-medium tracking-[0.18em] text-amber-200/80 uppercase">
-                  Milestone unlocked
+                  {t("toast.milestone")}
                 </div>
                 <div className="mt-1 text-base font-semibold">
-                  {formatNumber(t.threshold)} keystrokes
+                  {t("toast.keystrokes", { n: formatNumber(toast.threshold) })}
                 </div>
                 <div className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-                  Keep going.
+                  {t("toast.keepGoing")}
                 </div>
               </div>
             </div>

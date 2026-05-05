@@ -1,12 +1,14 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useStore } from "@/store/useStore";
 import { AnimatedNumber } from "./AnimatedNumber";
+import { useT } from "@/lib/i18n";
 
 export function LivePulse() {
   const liveKpm = useStore((s) => s.liveKpm);
   const pulseTick = useStore((s) => s.pulseTick);
   const kpm = liveKpm;
   const active = pulseTick > 0;
+  const t = useT();
 
   return (
     <div className="flex items-center gap-3 rounded-full border border-white/[0.06] bg-white/[0.03] py-1.5 pr-4 pl-2 backdrop-blur-xl">
@@ -34,7 +36,7 @@ export function LivePulse() {
           className="text-sm font-semibold tabular-nums"
         />
         <span className="text-[10px] font-medium tracking-wider text-[var(--color-text-muted)] uppercase">
-          KPM
+          {t("common.kpm")}
         </span>
       </div>
     </div>

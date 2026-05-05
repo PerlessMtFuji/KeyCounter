@@ -5,10 +5,12 @@ import { useStore } from "@/store/useStore";
 import { formatNumber } from "@/lib/format";
 import { keyLabel } from "@/lib/keycode";
 import { backspaceRatio } from "@/lib/derived";
+import { useT } from "@/lib/i18n";
 
 export function Stats() {
   const today = useStore((s) => s.today);
   const topKeys = useStore((s) => s.topKeys);
+  const t = useT();
 
   const top20 = topKeys.slice(0, 20);
   const max = top20[0]?.count ?? 1;
@@ -30,6 +32,14 @@ export function Stats() {
   const modRatio = todayTotal > 0 ? (modTotal / todayTotal) * 100 : 0;
 
   const back = backspaceRatio(today);
+  const backHint =
+    todayTotal === 0
+      ? t("stats.backspaceWarmup")
+      : back < 0.07
+        ? t("stats.backspaceLow")
+        : back < 0.1
+          ? t("stats.backspaceMid")
+          : t("stats.backspaceHigh");
 
   return (
     <div className="space-y-6">
@@ -40,22 +50,22 @@ export function Stats() {
           transition={{ duration: 0.5 }}
           className="text-3xl font-semibold tracking-tight"
         >
-          Stats
+          {t("stats.title")}
         </motion.h1>
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-          Detailed breakdown across all keys and behaviours.
+          {t("stats.subtitle")}
         </p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
         <GlassCard delay={0.05} className="lg:col-span-2">
           <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-            Top 20 keys · last 30 days
+            {t("stats.top20")}
           </div>
           <div className="mt-4 grid gap-2.5">
             {top20.length === 0 ? (
               <div className="py-8 text-center text-sm text-[var(--color-text-muted)]">
-                No key data yet.
+                {t("common.noData")}
               </div>
             ) : (
               top20.map((k, i) => {
@@ -71,7 +81,7 @@ export function Stats() {
                     <span className="w-5 text-right text-[10px] tabular-nums text-[var(--color-text-muted)]">
                       {i + 1}
                     </span>
-                    <div className="flex h-7 min-w-9 shrink-0 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.03] px-2 text-xs font-semibold whitespace-nowrap">
+                    <div className="flex h-7 min-w-9 shrink-0 items-center justify-center rounded-md border border-[var(--color-glass-stroke)] bg-white/[0.03] px-2 text-xs font-semibold whitespace-nowrap">
                       {keyLabel(k.code)}
                     </div>
                     <div className="flex-1">
@@ -101,13 +111,13 @@ export function Stats() {
         <div className="space-y-4">
           <GlassCard delay={0.1}>
             <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-              Modifier mix · today
+              {t("stats.modifierMix")}
             </div>
             <div className="mt-4 flex items-center justify-center">
               <Donut
                 slices={modSlices}
                 centerLabel={`${modRatio.toFixed(1)}%`}
-                centerSubLabel="of all keys"
+                centerSubLabel={t("stats.ofAllKeys")}
               />
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
@@ -130,19 +140,13 @@ export function Stats() {
 
           <GlassCard delay={0.15}>
             <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-              Backspace ratio · today
+              {t("stats.backspaceRatio")}
             </div>
             <div className="mt-3 text-3xl font-semibold tabular-nums">
               {(back * 100).toFixed(1)}%
             </div>
             <div className="mt-1 text-[11px] text-[var(--color-text-muted)]">
-              {todayTotal === 0
-                ? "Type a bit, then come back."
-                : back < 0.07
-                  ? "You delete less than most. Confident typist."
-                  : back < 0.1
-                    ? "Healthy correction rate."
-                    : "Consider slowing down for accuracy."}
+              {backHint}
             </div>
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.04]">
               <motion.div
@@ -158,12 +162,12 @@ export function Stats() {
 
       <GlassCard delay={0.2}>
         <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-          Least used (with non-zero count)
+          {t("stats.leastUsed")}
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
           {least.length === 0 ? (
             <div className="col-span-full py-6 text-center text-sm text-[var(--color-text-muted)]">
-              Not enough data yet.
+              {t("common.notEnough")}
             </div>
           ) : (
             least.map((k, i) => (
@@ -172,7 +176,7 @@ export function Stats() {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.25 + i * 0.04 }}
-                className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center"
+                className="rounded-xl border border-[var(--color-glass-stroke)] bg-white/[0.02] p-3 text-center"
               >
                 <div className="text-lg font-semibold">{keyLabel(k.code)}</div>
                 <div className="mt-1 text-[10px] tabular-nums text-[var(--color-text-muted)]">
