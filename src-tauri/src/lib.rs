@@ -11,10 +11,15 @@ use std::time::Duration;
 
 use serde::Serialize;
 use tauri::{
+    image::Image,
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::TrayIconBuilder,
-    Emitter, Manager, State,
+    Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder,
 };
+
+const TRAY_IDLE: &[u8] = include_bytes!("../icons/tray-idle.png");
+const TRAY_PULSE_A: &[u8] = include_bytes!("../icons/tray-pulse-a.png");
+const TRAY_PULSE_B: &[u8] = include_bytes!("../icons/tray-pulse-b.png");
 
 use crate::state::AppState;
 use crate::store::{
@@ -149,6 +154,36 @@ fn export_data(state: State<'_, AppState>) -> Result<serde_json::Value, String> 
     export_json(&conn).map_err(map_err)
 }
 
+#[tauri::command]
+fn open_widget(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(w) = app.get_webview_window("widget") {
+        let _ = w.show();
+        let _ = w.set_focus();
+        return Ok(());
+    }
+    WebviewWindowBuilder::new(&app, "widget", WebviewUrl::App("widget.html".into()))
+        .title("KeyCounter widget")
+        .inner_size(220.0, 96.0)
+        .resizable(false)
+        .decorations(false)
+        .transparent(true)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .build()
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn show_main(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.show();
+        let _ = w.unminimize();
+        let _ = w.set_focus();
+    }
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let _ = env_logger::try_init();
@@ -178,47 +213,30 @@ pub fn run() {
             store.spawn_writer(rx);
             hook::spawn(tx, app_state.paused.clone(), app_state.live_counter.clone());
 
-            // Live emitter thread: every 200 ms read the live counter delta and
-            // push a `live-pulse` event to the frontend. Used for ripple/pulse
-            // animations; numerical KPM still polls get_live() for accuracy.
-            let app_handle = app.handle().clone();
-            let live_counter = app_state.live_counter.clone();
-            thread::Builder::new()
-                .name("kc-emit".into())
-                .spawn(move || {
-                    let mut last: i64 = 0;
-                    loop {
-                        thread::sleep(Duration::from_millis(200));
-                        let now = live_counter.load(Ordering::Relaxed);
-                        let delta = now - last;
-                        if delta > 0 {
-                            last = now;
-                            let _ = app_handle.emit(
-                                "live-pulse",
-                                LivePulse { delta, total: now },
-                            );
-                        }
-                    }
-                })
-                .expect("failed to spawn emit thread");
-
             // Tray icon + menu.
             let show = MenuItem::with_id(app, "show", "Show KeyCounter", true, None::<&str>)?;
+            let widget =
+                MenuItem::with_id(app, "widget", "Open floating widget", true, None::<&str>)?;
             let pause = MenuItem::with_id(app, "pause", "Pause / Resume", true, None::<&str>)?;
             let sep = PredefinedMenuItem::separator(app)?;
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&show, &pause, &sep, &quit])?;
+            let menu = Menu::with_items(app, &[&show, &widget, &pause, &sep, &quit])?;
 
+            let idle_icon = Image::from_bytes(TRAY_IDLE).expect("decode tray-idle");
             let _tray = TrayIconBuilder::with_id("kc-tray")
-                .icon(app.default_window_icon().unwrap().clone())
+                .icon(idle_icon)
                 .tooltip("KeyCounter")
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "show" => {
                         if let Some(w) = app.get_webview_window("main") {
                             let _ = w.show();
+                            let _ = w.unminimize();
                             let _ = w.set_focus();
                         }
+                    }
+                    "widget" => {
+                        let _ = open_widget(app.clone());
                     }
                     "pause" => {
                         let s = app.state::<AppState>();
@@ -231,6 +249,53 @@ pub fn run() {
                     _ => {}
                 })
                 .build(app)?;
+
+            // Live emitter thread: every 200 ms read the live counter delta and
+            // push a `live-pulse` event to the frontend. Also drives the tray
+            // icon "breathing" animation while the user is actively typing.
+            let app_handle = app.handle().clone();
+            let live_counter = app_state.live_counter.clone();
+            let pulse_a = Image::from_bytes(TRAY_PULSE_A).expect("decode tray-pulse-a");
+            let pulse_b = Image::from_bytes(TRAY_PULSE_B).expect("decode tray-pulse-b");
+            let idle = Image::from_bytes(TRAY_IDLE).expect("decode tray-idle");
+            thread::Builder::new()
+                .name("kc-emit".into())
+                .spawn(move || {
+                    let mut last: i64 = 0;
+                    let mut idle_ticks: u32 = 0;
+                    let mut pulse_phase: u32 = 0;
+                    loop {
+                        thread::sleep(Duration::from_millis(200));
+                        let now = live_counter.load(Ordering::Relaxed);
+                        let delta = now - last;
+                        if delta > 0 {
+                            last = now;
+                            idle_ticks = 0;
+                            pulse_phase = pulse_phase.wrapping_add(1);
+                            let _ = app_handle
+                                .emit("live-pulse", LivePulse { delta, total: now });
+                        } else {
+                            idle_ticks = idle_ticks.saturating_add(1);
+                        }
+
+                        // Tray icon: alternate between two pulse frames while
+                        // typing, snap to the dim "idle" frame after ~1 second
+                        // of inactivity.
+                        if let Some(tray) =
+                            app_handle.tray_by_id("kc-tray")
+                        {
+                            let frame = if idle_ticks > 5 {
+                                &idle
+                            } else if pulse_phase % 2 == 0 {
+                                &pulse_a
+                            } else {
+                                &pulse_b
+                            };
+                            let _ = tray.set_icon(Some(frame.clone()));
+                        }
+                    }
+                })
+                .expect("failed to spawn emit thread");
 
             app.manage(app_state);
             log::info!("KeyCounter started; db at {}", db_path.display());
@@ -252,6 +317,8 @@ pub fn run() {
             get_calendar,
             reset_database,
             export_data,
+            open_widget,
+            show_main,
         ])
         .run(tauri::generate_context!())
         .expect("error while running KeyCounter");

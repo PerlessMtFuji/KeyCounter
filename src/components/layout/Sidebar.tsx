@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
+import { invoke } from "@tauri-apps/api/core";
 import { useStore, type View } from "@/store/useStore";
+import { isTauri } from "@/lib/api";
 
 interface Item {
   view: View;
@@ -69,7 +71,18 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto">
+      <div className="mt-auto space-y-2">
+        <button
+          onClick={() => isTauri() && invoke("open_widget").catch(console.error)}
+          disabled={!isTauri()}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-[11px] font-medium text-[var(--color-text-muted)] transition hover:bg-white/[0.05] hover:text-white disabled:opacity-40"
+        >
+          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M9 9h6v6H9z" />
+          </svg>
+          Floating widget
+        </button>
         <button
           onClick={togglePaused}
           className="glass flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm transition hover:bg-white/[0.06]"

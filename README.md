@@ -120,6 +120,7 @@ Final bundle: ~10 MB binary, ~50 MB resident memory.
 | 4 | Wire-up real data, real-time KPM, tray icon | ✅ |
 | 5 | Streaks calendar, finger load, layouts, milestone toasts | ✅ |
 | 6 | CI release pipeline, autostart, settings, export | ✅ |
+| 7 | Real-time UI tick, hover spotlight, themed scrollbar, floating widget, pulsing tray | ✅ |
 
 ### Post-MVP ideas
 
