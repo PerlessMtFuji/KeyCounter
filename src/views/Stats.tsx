@@ -71,7 +71,7 @@ export function Stats() {
                     <span className="w-5 text-right text-[10px] tabular-nums text-[var(--color-text-muted)]">
                       {i + 1}
                     </span>
-                    <div className="flex h-7 w-9 shrink-0 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.03] text-xs font-semibold">
+                    <div className="flex h-7 min-w-9 shrink-0 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.03] px-2 text-xs font-semibold whitespace-nowrap">
                       {keyLabel(k.code)}
                     </div>
                     <div className="flex-1">

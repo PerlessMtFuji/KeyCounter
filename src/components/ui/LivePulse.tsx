@@ -3,9 +3,9 @@ import { useStore } from "@/store/useStore";
 import { AnimatedNumber } from "./AnimatedNumber";
 
 export function LivePulse() {
-  const live = useStore((s) => s.live);
+  const liveKpm = useStore((s) => s.liveKpm);
   const pulseTick = useStore((s) => s.pulseTick);
-  const kpm = live?.last_minute ?? 0;
+  const kpm = liveKpm;
   const active = pulseTick > 0;
 
   return (

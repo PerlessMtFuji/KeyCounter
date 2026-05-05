@@ -50,8 +50,11 @@ function App() {
 
   useEffect(() => {
     if (!isTauri()) return;
+    // refreshLive syncs the authoritative KPM/last-hour numbers from the DB;
+    // refreshAll re-syncs everything else. Both are backstops — actual UI
+    // numbers tick up on every live-pulse via recordPulse().
     const liveTimer = setInterval(refreshLive, 2000);
-    const allTimer = setInterval(refreshAll, 30_000);
+    const allTimer = setInterval(refreshAll, 5_000);
     return () => {
       clearInterval(liveTimer);
       clearInterval(allTimer);

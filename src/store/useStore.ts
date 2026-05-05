@@ -47,6 +47,9 @@ interface AppState {
   // Live pulse: increments on each live-pulse event from backend
   pulseTick: number;
   lastPulseDelta: number;
+  /// Sliding 60-second window of pulse deltas → instant client-side KPM.
+  pulseHistory: { ts: number; delta: number }[];
+  liveKpm: number;
 
   // Year-view streak calendar
   calendar: DayTotal[];
@@ -56,6 +59,7 @@ interface AppState {
   heatmapRange: "today" | "7d" | "30d" | "all";
   heatmapKeys: KeyCount[];
   setHeatmapRange: (r: "today" | "7d" | "30d" | "all") => Promise<void>;
+  fetchHeatmapKeys: () => Promise<void>;
 
   // Layout
   layout: LayoutId;
@@ -175,6 +179,8 @@ export const useStore = create<AppState>((set, get) => ({
 
   pulseTick: 0,
   lastPulseDelta: 0,
+  pulseHistory: [],
+  liveKpm: 0,
 
   calendar: [],
   loadCalendar: async () => {
@@ -212,6 +218,10 @@ export const useStore = create<AppState>((set, get) => ({
   heatmapKeys: [],
   setHeatmapRange: async (r) => {
     set({ heatmapRange: r });
+    await get().fetchHeatmapKeys();
+  },
+  fetchHeatmapKeys: async () => {
+    const r = get().heatmapRange;
     if (!isTauri()) {
       const all = get().topKeys;
       const factor =
@@ -271,7 +281,7 @@ export const useStore = create<AppState>((set, get) => ({
 
     await get().refreshAll();
     await get().loadCalendar();
-    await get().setHeatmapRange(get().heatmapRange);
+    await get().fetchHeatmapKeys();
   },
 
   refreshAll: async () => {
@@ -334,10 +344,32 @@ export const useStore = create<AppState>((set, get) => ({
   },
 }));
 
-// Increment pulse tick (called from a global event listener in App)
+// Called from a global event listener in App on every backend live-pulse.
+// Optimistically bumps the totals so Dashboard cards tick up in real time
+// without waiting for the next backend poll.
 export function recordPulse(delta: number) {
-  useStore.setState((s) => ({
-    pulseTick: s.pulseTick + 1,
-    lastPulseDelta: delta,
-  }));
+  const now = Date.now();
+  useStore.setState((s) => {
+    const history = [
+      ...s.pulseHistory.filter((p) => now - p.ts < 60_000),
+      { ts: now, delta },
+    ];
+    const liveKpm = history.reduce((a, b) => a + b.delta, 0);
+    return {
+      pulseTick: s.pulseTick + 1,
+      lastPulseDelta: delta,
+      pulseHistory: history,
+      liveKpm,
+      lifetime: s.lifetime + delta,
+      today: s.today
+        ? { ...s.today, total: s.today.total + delta }
+        : s.today,
+      range7: s.range7
+        ? { ...s.range7, total: s.range7.total + delta }
+        : s.range7,
+      range30: s.range30
+        ? { ...s.range30, total: s.range30.total + delta }
+        : s.range30,
+    };
+  });
 }

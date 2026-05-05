@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { KeyboardHeatmap } from "@/components/heatmap/KeyboardHeatmap";
@@ -20,11 +20,23 @@ const RANGES: { id: "today" | "7d" | "30d" | "all"; label: string }[] = [
 export function Heatmap() {
   const heatmapRange = useStore((s) => s.heatmapRange);
   const setHeatmapRange = useStore((s) => s.setHeatmapRange);
+  const fetchHeatmapKeys = useStore((s) => s.fetchHeatmapKeys);
   const heatmapKeys = useStore((s) => s.heatmapKeys);
   const punchCard = useStore((s) => s.punchCard);
   const calendar = useStore((s) => s.calendar);
+  const loadCalendar = useStore((s) => s.loadCalendar);
+  const refreshAll = useStore((s) => s.refreshAll);
   const layout = useStore((s) => s.layout);
   const setLayout = useStore((s) => s.setLayout);
+
+  // Always refetch heatmap data when this view becomes visible. The other
+  // views are dashboard-only and refresh from the global timer.
+  useEffect(() => {
+    fetchHeatmapKeys();
+    if (calendar.length === 0) loadCalendar();
+    if (punchCard.every((row) => row.every((v) => v === 0))) refreshAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const counts = useMemo(() => {
     const map: Record<number, number> = {};

@@ -16,13 +16,13 @@ export function Dashboard() {
   const hourly = useStore((s) => s.hourly);
   const streak = useStore((s) => s.streak);
   const lifetime = useStore((s) => s.lifetime);
-  const live = useStore((s) => s.live);
+  const liveKpm = useStore((s) => s.liveKpm);
   const demo = useStore((s) => s.demo);
 
   const todayTotal = today?.total ?? 0;
   const weekTotal = range7?.total ?? 0;
   const monthTotal = range30?.total ?? 0;
-  const kpm = live?.last_minute ?? 0;
+  const kpm = liveKpm;
 
   const last30 = (range30?.by_day ?? []).map((d) => ({
     label: d.day.slice(5),
@@ -161,7 +161,7 @@ export function Dashboard() {
                     transition={{ duration: 0.5, delay: 0.45 + i * 0.06 }}
                     className="flex items-center gap-3"
                   >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[var(--color-accent-soft)] text-xs font-semibold">
+                    <div className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[var(--color-accent-soft)] px-2 text-xs font-semibold whitespace-nowrap">
                       {keyLabel(k.code)}
                     </div>
                     <div className="flex-1">
