@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+dist/
+dist-ssr/
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/gen/
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Build
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+
+# OS
+Thumbs.db
