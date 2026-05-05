@@ -4,9 +4,48 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KeyCounter Widget</title>
+    <style>
+      /* Fallback styles applied even if the JS bundle / Tailwind CSS
+         fails to load — guarantees the window is never a blank white
+         square on first paint. React content takes over once mounted. */
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        background: transparent;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable",
+          "Inter", system-ui, sans-serif;
+        color: #f5f5fa;
+        -webkit-font-smoothing: antialiased;
+        user-select: none;
+      }
+      #root {
+        height: 100%;
+        width: 100%;
+      }
+      .widget-fallback {
+        height: 100%;
+        width: 100%;
+        background:
+          radial-gradient(circle at 15% 10%, rgba(124, 92, 255, 0.18), transparent 45%),
+          radial-gradient(circle at 85% 90%, rgba(56, 189, 248, 0.12), transparent 50%),
+          linear-gradient(180deg, #0a0a0f 0%, #050507 100%);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        color: #9090a8;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="widget-fallback">Loading…</div>
+    </div>
     <script type="module" src="/src/widget.tsx"></script>
   </body>
 </html>

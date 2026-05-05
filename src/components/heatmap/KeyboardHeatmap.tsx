@@ -23,6 +23,7 @@ export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
     label: string;
     x: number;
     y: number;
+    above: boolean;
   } | null>(null);
 
   const totalRowWidth = 15 * UNIT + 14 * GAP;
@@ -46,11 +47,17 @@ export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
               const w = (k.width ?? 1) * UNIT + ((k.width ?? 1) - 1) * GAP;
               const code = Array.isArray(k.code) ? k.code[0]! : k.code;
               const count = counts[code] ?? 0;
-              const intensity = Math.pow(count / max, 0.55); // gamma for perception
-              const fill = `rgba(124, 92, 255, ${0.06 + intensity * 0.7})`;
+              // Wider visual range: silent when 0, baseline punch even at low
+              // counts so 1-press keys are clearly distinguishable from unused.
+              const ratio = count === 0 ? 0 : count / max;
+              const intensity = Math.pow(ratio, 0.45);
+              const fill =
+                count === 0
+                  ? "rgba(255,255,255,0.025)"
+                  : `rgba(140, 110, 255, ${0.18 + intensity * 0.78})`;
               const glow =
-                intensity > 0.3
-                  ? `0 0 ${6 + intensity * 14}px rgba(124,92,255,${intensity * 0.55})`
+                intensity > 0.4
+                  ? `0 0 ${10 + intensity * 22}px rgba(140,110,255,${intensity * 0.7})`
                   : "none";
               return (
                 <motion.div
@@ -64,12 +71,17 @@ export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
                   }}
                   onMouseEnter={(e) => {
                     const r = e.currentTarget.getBoundingClientRect();
+                    // Default: float tooltip above the key. If the key is
+                    // close to the top of the viewport, flip it to below
+                    // so it stays in view.
+                    const above = r.top > 80;
                     setHovered({
                       code,
                       count,
                       label: keyLabel(code),
                       x: r.left + r.width / 2,
-                      y: r.top,
+                      y: above ? r.top : r.bottom,
+                      above,
                     });
                   }}
                   onMouseLeave={() => setHovered(null)}
@@ -91,18 +103,20 @@ export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
 
       {hovered && (
         <motion.div
-          initial={{ opacity: 0, y: 4 }}
+          initial={{ opacity: 0, y: hovered.above ? 4 : -4 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
-          className="glass pointer-events-none fixed z-50 rounded-lg px-3 py-2 text-xs"
+          className="pointer-events-none fixed z-50 rounded-xl border border-white/[0.1] bg-[#14141c]/95 px-3 py-2 text-xs shadow-2xl backdrop-blur-xl"
           style={{
             left: hovered.x,
-            top: hovered.y - 10,
-            transform: "translate(-50%, -100%)",
+            top: hovered.y + (hovered.above ? -10 : 10),
+            transform: hovered.above
+              ? "translate(-50%, -100%)"
+              : "translate(-50%, 0)",
           }}
         >
-          <div className="font-semibold">{hovered.label}</div>
-          <div className="text-[var(--color-text-muted)] tabular-nums">
+          <div className="font-semibold text-white">{hovered.label}</div>
+          <div className="mt-0.5 tabular-nums text-white/65">
             {formatNumber(hovered.count)} presses
           </div>
         </motion.div>

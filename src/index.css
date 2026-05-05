@@ -94,8 +94,8 @@ body {
 }
 
 /* Hover-spotlight: each .spotlight card tracks the pointer and paints a
-   soft radial gradient at (--mx, --my). The pseudo-element is only made
-   visible on hover so static cards stay flat. */
+   very soft white highlight at (--mx, --my). Kept low-contrast and wide
+   so it reads as a brightness shift, not a JPG-quality color blob. */
 .spotlight {
   position: relative;
 }
@@ -106,13 +106,13 @@ body {
   border-radius: inherit;
   pointer-events: none;
   background: radial-gradient(
-    320px circle at var(--mx, 50%) var(--my, 50%),
-    rgba(167, 139, 250, 0.14),
-    rgba(56, 189, 248, 0.08) 30%,
-    transparent 55%
+    480px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.045),
+    rgba(255, 255, 255, 0.018) 28%,
+    transparent 65%
   );
   opacity: 0;
-  transition: opacity 240ms ease;
+  transition: opacity 380ms ease-out;
   z-index: 0;
 }
 .spotlight:hover::before {

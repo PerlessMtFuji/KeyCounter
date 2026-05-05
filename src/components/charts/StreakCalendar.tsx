@@ -117,16 +117,20 @@ export function StreakCalendar({ data, days = 365 }: Props) {
           </div>
         ))}
       </div>
-      {hover && (
-        <div className="mt-2 text-[10px] text-[var(--color-text-muted)]">
-          <span className="font-mono text-white">{hover.day}</span>
-          {" · "}
-          <span className="tabular-nums text-white">
-            {formatNumber(hover.total)}
-          </span>{" "}
-          keystrokes
-        </div>
-      )}
+      {/* Reserve space so the legend below doesn't jump as hover content
+          comes and goes. */}
+      <div className="mt-2 h-[14px] text-[10px] text-[var(--color-text-muted)]">
+        {hover ? (
+          <>
+            <span className="font-mono text-white">{hover.day}</span>
+            {" · "}
+            <span className="tabular-nums text-white">
+              {formatNumber(hover.total)}
+            </span>{" "}
+            keystrokes
+          </>
+        ) : null}
+      </div>
       <div className="mt-3 flex items-center gap-2 text-[10px] text-[var(--color-text-muted)]">
         <span>less</span>
         <div className="flex gap-[3px]">
