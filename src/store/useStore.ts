@@ -3,6 +3,7 @@ import {
   api,
   isTauri,
   type DayStats,
+  type DayTotal,
   type LiveSnapshot,
   type KeyCount,
   type PermissionStatus,
@@ -10,6 +11,7 @@ import {
 } from "@/lib/api";
 import { generateMock } from "@/data/mock";
 import { daysAgo } from "@/lib/format";
+import type { LayoutId } from "@/lib/layouts";
 
 export type View =
   | "dashboard"
@@ -45,6 +47,19 @@ interface AppState {
   // Live pulse: increments on each live-pulse event from backend
   pulseTick: number;
   lastPulseDelta: number;
+
+  // Year-view streak calendar
+  calendar: DayTotal[];
+  loadCalendar: () => Promise<void>;
+
+  // Heatmap range fetching
+  heatmapRange: "today" | "7d" | "30d" | "all";
+  heatmapKeys: KeyCount[];
+  setHeatmapRange: (r: "today" | "7d" | "30d" | "all") => Promise<void>;
+
+  // Layout
+  layout: LayoutId;
+  setLayout: (l: LayoutId) => void;
 
   // Demo / mock-only mode (true when not running inside Tauri)
   demo: boolean;
@@ -161,6 +176,81 @@ export const useStore = create<AppState>((set, get) => ({
   pulseTick: 0,
   lastPulseDelta: 0,
 
+  calendar: [],
+  loadCalendar: async () => {
+    if (!isTauri()) {
+      // Mock: use 365 days of byDay30 repeated/scaled
+      const m = generateMock(42);
+      const out: DayTotal[] = [];
+      const today = new Date();
+      for (let i = 364; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        const dow = d.getDay();
+        const weekend = dow === 0 || dow === 6;
+        const seed = (i * 7919) % 1000;
+        const noise = (seed / 1000 - 0.5) * 12000;
+        const base = weekend ? 9000 : 16000;
+        out.push({
+          day: d.toISOString().slice(0, 10),
+          total: Math.max(0, Math.round(base + noise)),
+        });
+      }
+      void m;
+      set({ calendar: out });
+      return;
+    }
+    try {
+      const cal = await api.getCalendar(365);
+      set({ calendar: cal });
+    } catch (e) {
+      console.error(e);
+    }
+  },
+
+  heatmapRange: "30d",
+  heatmapKeys: [],
+  setHeatmapRange: async (r) => {
+    set({ heatmapRange: r });
+    if (!isTauri()) {
+      const all = get().topKeys;
+      const factor =
+        r === "today" ? 1 / 30 : r === "7d" ? 7 / 30 : r === "30d" ? 1 : 12;
+      set({
+        heatmapKeys: all.map((k) => ({
+          ...k,
+          count: Math.round(k.count * factor),
+        })),
+      });
+      return;
+    }
+    const today = daysAgo(0);
+    const from =
+      r === "today"
+        ? today
+        : r === "7d"
+          ? daysAgo(6)
+          : r === "30d"
+            ? daysAgo(29)
+            : daysAgo(3650);
+    try {
+      const keys = await api.getTopKeys(from, today, 200);
+      set({ heatmapKeys: keys });
+    } catch (e) {
+      console.error(e);
+    }
+  },
+
+  layout: (typeof localStorage !== "undefined"
+    ? (localStorage.getItem("kc-layout") as LayoutId | null)
+    : null) || "qwerty",
+  setLayout: (l) => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("kc-layout", l);
+    }
+    set({ layout: l });
+  },
+
   demo: !isTauri(),
 
   init: async () => {
@@ -180,6 +270,8 @@ export const useStore = create<AppState>((set, get) => ({
     }
 
     await get().refreshAll();
+    await get().loadCalendar();
+    await get().setHeatmapRange(get().heatmapRange);
   },
 
   refreshAll: async () => {

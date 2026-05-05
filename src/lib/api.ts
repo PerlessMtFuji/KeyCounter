@@ -72,6 +72,9 @@ export const api = {
   getTodayHourly: () => invoke<number[]>("get_today_hourly"),
   getPunchCard: () => invoke<number[][]>("get_punch_card"),
   getLifetimeTotal: () => invoke<number>("get_lifetime_total"),
+  getCalendar: (days: number) => invoke<DayTotal[]>("get_calendar", { days }),
+  resetDatabase: () => invoke<void>("reset_database"),
+  exportData: () => invoke<unknown>("export_data"),
 
   onLivePulse: (cb: (p: LivePulse) => void): Promise<UnlistenFn> =>
     listen<LivePulse>("live-pulse", (e) => cb(e.payload)),

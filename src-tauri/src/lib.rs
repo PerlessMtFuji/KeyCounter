@@ -18,8 +18,9 @@ use tauri::{
 
 use crate::state::AppState;
 use crate::store::{
-    day_stats, lifetime_total, live_snapshot, punch_card_30d, range_stats, streak_days, today,
-    today_hourly, top_keys, DayStats, LiveSnapshot, RangeStats, Store, TopKey,
+    calendar, day_stats, export_json, lifetime_total, live_snapshot, punch_card_30d, range_stats,
+    reset_all, streak_days, today, today_hourly, top_keys, DayStats, DayTotal, LiveSnapshot,
+    RangeStats, Store, TopKey,
 };
 
 #[derive(Serialize)]
@@ -130,13 +131,37 @@ fn get_lifetime_total(state: State<'_, AppState>) -> Result<i64, String> {
     lifetime_total(&conn).map_err(map_err)
 }
 
+#[tauri::command]
+fn get_calendar(days: i64, state: State<'_, AppState>) -> Result<Vec<DayTotal>, String> {
+    let conn = state.store.reader().map_err(map_err)?;
+    calendar(&conn, days).map_err(map_err)
+}
+
+#[tauri::command]
+fn reset_database(state: State<'_, AppState>) -> Result<(), String> {
+    let mut conn = rusqlite::Connection::open(state.store.db_path()).map_err(map_err)?;
+    reset_all(&mut conn).map_err(map_err)
+}
+
+#[tauri::command]
+fn export_data(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let conn = state.store.reader().map_err(map_err)?;
+    export_json(&conn).map_err(map_err)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let _ = env_logger::try_init();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .setup(|app| {
             let data_dir = app
                 .path()
@@ -224,6 +249,9 @@ pub fn run() {
             get_today_hourly,
             get_punch_card,
             get_lifetime_total,
+            get_calendar,
+            reset_database,
+            export_data,
         ])
         .run(tauri::generate_context!())
         .expect("error while running KeyCounter");

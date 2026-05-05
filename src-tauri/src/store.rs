@@ -421,6 +421,72 @@ pub fn today() -> String {
     format!("{:04}-{:02}-{:02}", dt.year(), dt.month(), dt.day())
 }
 
+pub fn calendar(conn: &Connection, days: i64) -> SqlResult<Vec<DayTotal>> {
+    let from = (Utc::now() - chrono::Duration::days(days - 1))
+        .format("%Y-%m-%d")
+        .to_string();
+    let mut stmt = conn.prepare(
+        "SELECT day, SUM(count) FROM keystrokes
+         WHERE day >= ?1
+         GROUP BY day ORDER BY day",
+    )?;
+    let rows = stmt
+        .query_map(params![from], |r| {
+            Ok(DayTotal {
+                day: r.get(0)?,
+                total: r.get(1)?,
+            })
+        })?
+        .filter_map(Result::ok)
+        .collect();
+    Ok(rows)
+}
+
+pub fn reset_all(conn: &mut Connection) -> SqlResult<()> {
+    let tx = conn.transaction()?;
+    tx.execute_batch(
+        "DELETE FROM keystrokes;
+         DELETE FROM minute_totals;
+         DELETE FROM modifier_usage;
+         DELETE FROM achievements;
+         DELETE FROM meta;",
+    )?;
+    tx.commit()
+}
+
+pub fn export_json(conn: &Connection) -> SqlResult<serde_json::Value> {
+    let mut stmt = conn.prepare("SELECT day, code, count FROM keystrokes")?;
+    let keystrokes: Vec<serde_json::Value> = stmt
+        .query_map([], |r| {
+            Ok(serde_json::json!({
+                "day": r.get::<_, String>(0)?,
+                "code": r.get::<_, i32>(1)?,
+                "count": r.get::<_, i64>(2)?,
+            }))
+        })?
+        .filter_map(Result::ok)
+        .collect();
+
+    let mut stmt = conn.prepare("SELECT day, modifier, count FROM modifier_usage")?;
+    let modifiers: Vec<serde_json::Value> = stmt
+        .query_map([], |r| {
+            Ok(serde_json::json!({
+                "day": r.get::<_, String>(0)?,
+                "modifier": r.get::<_, String>(1)?,
+                "count": r.get::<_, i64>(2)?,
+            }))
+        })?
+        .filter_map(Result::ok)
+        .collect();
+
+    Ok(serde_json::json!({
+        "version": 1,
+        "exported_at": Utc::now().to_rfc3339(),
+        "keystrokes": keystrokes,
+        "modifiers": modifiers,
+    }))
+}
+
 pub fn lifetime_total(conn: &Connection) -> SqlResult<i64> {
     conn.query_row(
         "SELECT COALESCE(SUM(count), 0) FROM keystrokes",

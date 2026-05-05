@@ -3,16 +3,19 @@ import { useState } from "react";
 import { KEYBOARD_60 } from "./keyboard-layout";
 import { formatNumber } from "@/lib/format";
 import { keyLabel } from "@/lib/keycode";
+import { LAYOUT_OVERRIDES, type LayoutId } from "@/lib/layouts";
 
 interface Props {
   counts: Record<number, number>;
+  layout?: LayoutId;
 }
 
 const UNIT = 44; // px per 1u key
 const GAP = 4;
 const KEY_HEIGHT = 44;
 
-export function KeyboardHeatmap({ counts }: Props) {
+export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
+  const overrides = LAYOUT_OVERRIDES[layout];
   const max = Math.max(1, ...Object.values(counts));
   const [hovered, setHovered] = useState<{
     code: number;
@@ -78,7 +81,7 @@ export function KeyboardHeatmap({ counts }: Props) {
                     boxShadow: `inset 0 1px 0 rgba(255,255,255,0.06), ${glow}`,
                   }}
                 >
-                  {k.label}
+                  {overrides[code] ?? k.label}
                 </motion.div>
               );
             })}

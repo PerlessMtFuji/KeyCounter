@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: windows-x64
+            args: --target x86_64-pc-windows-msvc
+          - os: macos-latest
+            target: macos-aarch64
+            args: --target aarch64-apple-darwin
+          - os: macos-13
+            target: macos-x64
+            args: --target x86_64-apple-darwin
+          - os: ubuntu-22.04
+            target: linux-x64
+            args: ""
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.os == 'macos-latest' && 'aarch64-apple-darwin' || matrix.os == 'macos-13' && 'x86_64-apple-darwin' || '' }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install Linux deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev \
+            libxdo-dev libayatana-appindicator3-dev librsvg2-dev \
+            libsoup-3.0-dev libjavascriptcoregtk-4.1-dev
+
+      - run: npm ci
+
+      - name: Build with Tauri
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: KeyCounter ${{ github.ref_name }}
+          releaseBody: |
+            ## KeyCounter ${{ github.ref_name }}
+
+            **Unsigned build.** See [docs/antivirus.md](https://github.com/${{ github.repository }}/blob/main/docs/antivirus.md) for how to bypass SmartScreen / Defender / Gatekeeper warnings on first run.
+
+            ### Verify the binary
+            Each artifact's SHA-256 is in the build logs of [this workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+
+            ### What's new
+            See commit log for details.
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
