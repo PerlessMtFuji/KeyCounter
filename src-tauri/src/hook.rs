@@ -4,7 +4,7 @@
 //! the bare minimum: timestamp + map to our stable [`KeyCode`] + push onto an
 //! unbounded channel. All persistence happens on the [store thread](crate::store).
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::sync::mpsc::Sender;
 use std::sync::Arc;
 use std::thread;
@@ -25,8 +25,13 @@ pub struct KeyEvent {
 /// Spawns the listener. Returns immediately; the thread runs forever.
 ///
 /// `paused` lets the UI silently drop events without uninstalling the hook
-/// (cheap toggle, no permission re-prompt on macOS).
-pub fn spawn(tx: Sender<KeyEvent>, paused: Arc<AtomicBool>) {
+/// (cheap toggle, no permission re-prompt on macOS). `live_counter` is bumped
+/// on every observed press for the emitter thread to read.
+pub fn spawn(
+    tx: Sender<KeyEvent>,
+    paused: Arc<AtomicBool>,
+    live_counter: Arc<AtomicI64>,
+) {
     thread::Builder::new()
         .name("kc-hook".into())
         .spawn(move || {
@@ -35,12 +40,12 @@ pub fn spawn(tx: Sender<KeyEvent>, paused: Arc<AtomicBool>) {
                     return;
                 }
                 if let EventType::KeyPress(key) = event.event_type {
+                    live_counter.fetch_add(1, Ordering::Relaxed);
                     let code = KeyCode::from_rdev(key);
                     let ev = KeyEvent {
                         timestamp_ms: Utc::now().timestamp_millis(),
                         code,
                     };
-                    // If the receiver is gone the app is shutting down; stop trying.
                     let _ = tx.send(ev);
                 }
             };

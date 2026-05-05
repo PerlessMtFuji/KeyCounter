@@ -4,25 +4,32 @@ import { Donut } from "@/components/charts/Donut";
 import { useStore } from "@/store/useStore";
 import { formatNumber } from "@/lib/format";
 import { keyLabel } from "@/lib/keycode";
+import { backspaceRatio } from "@/lib/derived";
 
 export function Stats() {
-  const { data } = useStore();
-  const top20 = data.perKeyLifetime.slice(0, 20);
+  const today = useStore((s) => s.today);
+  const topKeys = useStore((s) => s.topKeys);
+
+  const top20 = topKeys.slice(0, 20);
   const max = top20[0]?.count ?? 1;
 
-  const least = [...data.perKeyLifetime]
+  const least = [...topKeys]
     .filter((k) => k.count > 0)
     .slice(-8)
     .reverse();
 
+  const mods = today?.modifiers ?? { shift: 0, ctrl: 0, alt: 0, meta: 0 };
   const modSlices = [
-    { label: "Shift", value: data.modifiers.shift, color: "#a78bfa" },
-    { label: "Ctrl", value: data.modifiers.ctrl, color: "#38bdf8" },
-    { label: "Alt", value: data.modifiers.alt, color: "#34d399" },
-    { label: "Meta", value: data.modifiers.meta, color: "#fbbf24" },
+    { label: "Shift", value: mods.shift, color: "#a78bfa" },
+    { label: "Ctrl", value: mods.ctrl, color: "#38bdf8" },
+    { label: "Alt", value: mods.alt, color: "#34d399" },
+    { label: "Meta", value: mods.meta, color: "#fbbf24" },
   ];
   const modTotal = modSlices.reduce((a, b) => a + b.value, 0);
-  const modRatio = (modTotal / data.monthTotal) * 100;
+  const todayTotal = today?.total ?? 0;
+  const modRatio = todayTotal > 0 ? (modTotal / todayTotal) * 100 : 0;
+
+  const back = backspaceRatio(today);
 
   return (
     <div className="space-y-6">
@@ -43,52 +50,58 @@ export function Stats() {
       <div className="grid gap-4 lg:grid-cols-3">
         <GlassCard delay={0.05} className="lg:col-span-2">
           <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-            Top 20 keys · all-time
+            Top 20 keys · last 30 days
           </div>
           <div className="mt-4 grid gap-2.5">
-            {top20.map((k, i) => {
-              const pct = (k.count / max) * 100;
-              return (
-                <motion.div
-                  key={k.code}
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 + i * 0.025 }}
-                  className="flex items-center gap-3"
-                >
-                  <span className="w-5 text-right text-[10px] tabular-nums text-[var(--color-text-muted)]">
-                    {i + 1}
-                  </span>
-                  <div className="flex h-7 w-9 shrink-0 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.03] text-xs font-semibold">
-                    {keyLabel(k.code)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="relative h-1 overflow-hidden rounded-full bg-white/[0.04]">
-                      <motion.div
-                        className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-violet-400 to-sky-400"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{
-                          duration: 0.8,
-                          delay: 0.15 + i * 0.025,
-                          ease: [0.16, 1, 0.3, 1],
-                        }}
-                      />
+            {top20.length === 0 ? (
+              <div className="py-8 text-center text-sm text-[var(--color-text-muted)]">
+                No key data yet.
+              </div>
+            ) : (
+              top20.map((k, i) => {
+                const pct = (k.count / max) * 100;
+                return (
+                  <motion.div
+                    key={k.code}
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 + i * 0.025 }}
+                    className="flex items-center gap-3"
+                  >
+                    <span className="w-5 text-right text-[10px] tabular-nums text-[var(--color-text-muted)]">
+                      {i + 1}
+                    </span>
+                    <div className="flex h-7 w-9 shrink-0 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.03] text-xs font-semibold">
+                      {keyLabel(k.code)}
                     </div>
-                  </div>
-                  <div className="w-20 text-right text-xs tabular-nums text-[var(--color-text-muted)]">
-                    {formatNumber(k.count)}
-                  </div>
-                </motion.div>
-              );
-            })}
+                    <div className="flex-1">
+                      <div className="relative h-1 overflow-hidden rounded-full bg-white/[0.04]">
+                        <motion.div
+                          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-violet-400 to-sky-400"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{
+                            duration: 0.8,
+                            delay: 0.15 + i * 0.025,
+                            ease: [0.16, 1, 0.3, 1],
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="w-20 text-right text-xs tabular-nums text-[var(--color-text-muted)]">
+                      {formatNumber(k.count)}
+                    </div>
+                  </motion.div>
+                );
+              })
+            )}
           </div>
         </GlassCard>
 
         <div className="space-y-4">
           <GlassCard delay={0.1}>
             <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-              Modifier mix
+              Modifier mix · today
             </div>
             <div className="mt-4 flex items-center justify-center">
               <Donut
@@ -117,25 +130,25 @@ export function Stats() {
 
           <GlassCard delay={0.15}>
             <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-              Backspace ratio
+              Backspace ratio · today
             </div>
             <div className="mt-3 text-3xl font-semibold tabular-nums">
-              {(data.backspaceRatio * 100).toFixed(1)}%
+              {(back * 100).toFixed(1)}%
             </div>
             <div className="mt-1 text-[11px] text-[var(--color-text-muted)]">
-              {data.backspaceRatio < 0.07
-                ? "You delete less than most. Confident typist."
-                : data.backspaceRatio < 0.1
-                  ? "Healthy correction rate."
-                  : "Consider slowing down for accuracy."}
+              {todayTotal === 0
+                ? "Type a bit, then come back."
+                : back < 0.07
+                  ? "You delete less than most. Confident typist."
+                  : back < 0.1
+                    ? "Healthy correction rate."
+                    : "Consider slowing down for accuracy."}
             </div>
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.04]">
               <motion.div
                 className="h-full rounded-full bg-gradient-to-r from-amber-300 to-rose-400"
                 initial={{ width: 0 }}
-                animate={{
-                  width: `${Math.min(100, data.backspaceRatio * 600)}%`,
-                }}
+                animate={{ width: `${Math.min(100, back * 600)}%` }}
                 transition={{ duration: 1.1, delay: 0.4 }}
               />
             </div>
@@ -148,20 +161,26 @@ export function Stats() {
           Least used (with non-zero count)
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
-          {least.map((k, i) => (
-            <motion.div
-              key={k.code}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.25 + i * 0.04 }}
-              className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center"
-            >
-              <div className="text-lg font-semibold">{keyLabel(k.code)}</div>
-              <div className="mt-1 text-[10px] tabular-nums text-[var(--color-text-muted)]">
-                {formatNumber(k.count)}
-              </div>
-            </motion.div>
-          ))}
+          {least.length === 0 ? (
+            <div className="col-span-full py-6 text-center text-sm text-[var(--color-text-muted)]">
+              Not enough data yet.
+            </div>
+          ) : (
+            least.map((k, i) => (
+              <motion.div
+                key={k.code}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.25 + i * 0.04 }}
+                className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center"
+              >
+                <div className="text-lg font-semibold">{keyLabel(k.code)}</div>
+                <div className="mt-1 text-[10px] tabular-nums text-[var(--color-text-muted)]">
+                  {formatNumber(k.count)}
+                </div>
+              </motion.div>
+            ))
+          )}
         </div>
       </GlassCard>
     </div>

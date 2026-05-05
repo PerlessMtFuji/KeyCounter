@@ -2,9 +2,13 @@ import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { useStore } from "@/store/useStore";
 import { formatNumber } from "@/lib/format";
+import { deriveAchievements } from "@/lib/derived";
 
 export function Achievements() {
-  const { data } = useStore();
+  const lifetime = useStore((s) => s.lifetime);
+  const streak = useStore((s) => s.streak);
+  const achievements = deriveAchievements(lifetime, streak);
+  const earned = achievements.filter((a) => a.earned).length;
 
   return (
     <div className="space-y-6">
@@ -18,13 +22,12 @@ export function Achievements() {
           Achievements
         </motion.h1>
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-          {data.achievements.filter((a) => a.earned).length} of{" "}
-          {data.achievements.length} unlocked
+          {earned} of {achievements.length} unlocked
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {data.achievements.map((a, i) => (
+        {achievements.map((a, i) => (
           <GlassCard key={a.id} delay={0.05 + i * 0.04}>
             <div className="flex items-start gap-3">
               <div

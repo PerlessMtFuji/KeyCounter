@@ -10,7 +10,7 @@ use std::sync::mpsc::{Receiver, RecvTimeoutError};
 use std::thread;
 use std::time::Duration;
 
-use chrono::{DateTime, Datelike, NaiveDate, TimeZone, Utc};
+use chrono::{DateTime, Datelike, NaiveDate, TimeZone, Timelike, Utc};
 use rusqlite::{params, Connection, OpenFlags, Result as SqlResult};
 use serde::Serialize;
 
@@ -419,4 +419,66 @@ pub fn streak_days(conn: &Connection) -> SqlResult<i64> {
 pub fn today() -> String {
     let dt = Utc::now();
     format!("{:04}-{:02}-{:02}", dt.year(), dt.month(), dt.day())
+}
+
+pub fn lifetime_total(conn: &Connection) -> SqlResult<i64> {
+    conn.query_row(
+        "SELECT COALESCE(SUM(count), 0) FROM keystrokes",
+        [],
+        |r| r.get(0),
+    )
+}
+
+/// Hourly buckets (24 entries) covering the local day so far. Derived from
+/// `minute_totals`. Indexes are local hours; idx 0 = 00:00, idx 23 = 23:00.
+pub fn today_hourly(conn: &Connection) -> SqlResult<Vec<i64>> {
+    let now = Utc::now();
+    let day_start = now
+        .date_naive()
+        .and_hms_opt(0, 0, 0)
+        .expect("midnight is valid")
+        .and_utc();
+    let start_min = day_start.timestamp() / 60;
+
+    let mut stmt = conn.prepare(
+        "SELECT minute, count FROM minute_totals WHERE minute >= ?1",
+    )?;
+    let rows = stmt.query_map(params![start_min], |r| {
+        Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?))
+    })?;
+
+    let mut hourly = vec![0i64; 24];
+    for row in rows.flatten() {
+        let h = ((row.0 - start_min) / 60) as usize;
+        if h < 24 {
+            hourly[h] += row.1;
+        }
+    }
+    Ok(hourly)
+}
+
+/// Punch card matrix (7 × 24): rows are weekdays with Sunday = 0, columns
+/// are hours of day. Derived from the last 30 days of `minute_totals`.
+pub fn punch_card_30d(conn: &Connection) -> SqlResult<Vec<Vec<i64>>> {
+    let now = Utc::now();
+    let start = now - chrono::Duration::days(30);
+    let start_min = start.timestamp() / 60;
+
+    let mut stmt = conn.prepare(
+        "SELECT minute, count FROM minute_totals WHERE minute >= ?1",
+    )?;
+    let rows = stmt.query_map(params![start_min], |r| {
+        Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?))
+    })?;
+
+    let mut grid = vec![vec![0i64; 24]; 7];
+    for (minute_unix, count) in rows.flatten() {
+        let ts = minute_unix * 60;
+        if let Some(dt) = Utc.timestamp_opt(ts, 0).single() {
+            let dow = dt.weekday().num_days_from_sunday() as usize;
+            let hour = dt.hour() as usize;
+            grid[dow][hour] += count;
+        }
+    }
+    Ok(grid)
 }

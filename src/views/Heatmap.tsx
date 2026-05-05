@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { KeyboardHeatmap } from "@/components/heatmap/KeyboardHeatmap";
@@ -6,18 +6,21 @@ import { PunchCard } from "@/components/charts/PunchCard";
 import { useStore } from "@/store/useStore";
 import { formatNumber } from "@/lib/format";
 
-type Range = "today" | "week" | "month" | "all";
+type Range = "today" | "30d";
 
 export function Heatmap() {
-  const { data } = useStore();
-  const [range, setRange] = useState<Range>("all");
+  const today = useStore((s) => s.today);
+  const topKeys = useStore((s) => s.topKeys);
+  const punchCard = useStore((s) => s.punchCard);
+  const [range, setRange] = useState<Range>("30d");
 
-  // For mock: scale lifetime counts by range
-  const factor =
-    range === "today" ? 1 / 60 : range === "week" ? 7 / 60 : range === "month" ? 30 / 60 : 1;
-  const counts: Record<number, number> = Object.fromEntries(
-    data.perKeyLifetime.map((k) => [k.code, Math.round(k.count * factor)]),
-  );
+  const counts = useMemo(() => {
+    const src = range === "today" ? today?.by_code ?? [] : topKeys;
+    const map: Record<number, number> = {};
+    for (const k of src) map[k.code] = k.count;
+    return map;
+  }, [range, today, topKeys]);
+
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return (
@@ -37,11 +40,16 @@ export function Heatmap() {
           </p>
         </div>
         <div className="glass flex rounded-xl p-1 text-xs">
-          {(["today", "week", "month", "all"] as Range[]).map((r) => (
+          {(
+            [
+              ["today", "Today"],
+              ["30d", "Last 30 days"],
+            ] as [Range, string][]
+          ).map(([r, label]) => (
             <button
               key={r}
               onClick={() => setRange(r)}
-              className={`relative rounded-lg px-3 py-1.5 capitalize transition ${
+              className={`relative rounded-lg px-3 py-1.5 transition ${
                 range === r
                   ? "text-white"
                   : "text-[var(--color-text-muted)] hover:text-white"
@@ -54,7 +62,7 @@ export function Heatmap() {
                   transition={{ type: "spring", stiffness: 500, damping: 40 }}
                 />
               )}
-              <span className="relative">{r}</span>
+              <span className="relative">{label}</span>
             </button>
           ))}
         </div>
@@ -63,10 +71,13 @@ export function Heatmap() {
       <GlassCard delay={0.1}>
         <div className="flex items-baseline justify-between">
           <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-            {range === "all" ? "All time" : `Last ${range}`}
+            {range === "today" ? "Today" : "Last 30 days"}
           </div>
           <div className="text-xs text-[var(--color-text-muted)]">
-            <span className="text-white tabular-nums">{formatNumber(total)}</span> total presses
+            <span className="text-white tabular-nums">
+              {formatNumber(total)}
+            </span>{" "}
+            total presses
           </div>
         </div>
         <div className="mt-6 flex justify-center overflow-x-auto pb-4">
@@ -81,10 +92,10 @@ export function Heatmap() {
 
       <GlassCard delay={0.2}>
         <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-          When you type · day × hour
+          When you type · day × hour · last 30 days
         </div>
         <div className="mt-5">
-          <PunchCard data={data.punchCard} />
+          <PunchCard data={punchCard} />
         </div>
       </GlassCard>
     </div>

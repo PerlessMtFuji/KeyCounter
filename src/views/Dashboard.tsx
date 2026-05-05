@@ -9,15 +9,30 @@ import { formatNumber } from "@/lib/format";
 import { keyLabel } from "@/lib/keycode";
 
 export function Dashboard() {
-  const { data } = useStore();
+  const today = useStore((s) => s.today);
+  const range7 = useStore((s) => s.range7);
+  const range30 = useStore((s) => s.range30);
+  const topKeys = useStore((s) => s.topKeys);
+  const hourly = useStore((s) => s.hourly);
+  const streak = useStore((s) => s.streak);
+  const lifetime = useStore((s) => s.lifetime);
+  const live = useStore((s) => s.live);
+  const demo = useStore((s) => s.demo);
 
-  const last30 = data.byDay30.map((d) => ({
+  const todayTotal = today?.total ?? 0;
+  const weekTotal = range7?.total ?? 0;
+  const monthTotal = range30?.total ?? 0;
+  const kpm = live?.last_minute ?? 0;
+
+  const last30 = (range30?.by_day ?? []).map((d) => ({
     label: d.day.slice(5),
     value: d.total,
   }));
 
-  const top5 = data.perKeyLifetime.slice(0, 5);
+  const top5 = topKeys.slice(0, 5);
   const top5Max = top5[0]?.count ?? 1;
+
+  const isFresh = !demo && lifetime === 0;
 
   return (
     <div className="space-y-6">
@@ -36,36 +51,40 @@ export function Dashboard() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="mt-1 text-sm text-[var(--color-text-muted)]"
         >
-          Snapshot of your typing activity. All numbers stay on this machine.
+          {isFresh
+            ? "Type something — your stats appear here in real time."
+            : "Snapshot of your typing activity. All numbers stay on this machine."}
         </motion.p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           label="Today"
-          value={data.todayTotal}
+          value={todayTotal}
           unit="keys"
           delay={0.05}
           accent="from-violet-400 to-fuchsia-400"
         />
         <StatCard
           label="KPM"
-          value={data.todayKpm}
+          value={kpm}
           unit="/ min"
-          hint="Active-typing average"
+          hint="Live · last minute"
           delay={0.1}
           accent="from-sky-400 to-cyan-300"
+          format={(n) => Math.round(n).toString()}
         />
         <StatCard
           label="Streak"
-          value={data.streak}
+          value={streak}
           unit="days"
           delay={0.15}
           accent="from-amber-300 to-orange-400"
+          format={(n) => Math.round(n).toString()}
         />
         <StatCard
           label="Lifetime"
-          value={data.lifetimeTotal}
+          value={lifetime}
           unit="keys"
           delay={0.2}
           accent="from-emerald-300 to-teal-300"
@@ -80,7 +99,7 @@ export function Dashboard() {
                 Last 30 days
               </div>
               <div className="mt-1 text-2xl font-semibold tabular-nums">
-                <AnimatedNumber value={data.monthTotal} />
+                <AnimatedNumber value={monthTotal} />
                 <span className="ml-2 text-sm font-normal text-[var(--color-text-muted)]">
                   keys
                 </span>
@@ -89,7 +108,7 @@ export function Dashboard() {
             <div className="text-xs text-[var(--color-text-muted)]">
               avg{" "}
               <span className="text-white tabular-nums">
-                {formatNumber(Math.round(data.monthTotal / 30))}
+                {formatNumber(Math.round(monthTotal / 30))}
               </span>{" "}
               / day
             </div>
@@ -104,14 +123,19 @@ export function Dashboard() {
             7-day trend
           </div>
           <div className="mt-1 text-2xl font-semibold tabular-nums">
-            <AnimatedNumber value={data.weekTotal} />
+            <AnimatedNumber value={weekTotal} />
           </div>
           <div className="mt-3">
-            <Sparkline values={data.byDay7.map((d) => d.total)} height={64} />
+            <Sparkline
+              values={(range7?.by_day ?? []).map((d) => d.total)}
+              height={64}
+            />
           </div>
           <div className="mt-3 flex justify-between text-[10px] text-[var(--color-text-muted)]">
-            <span>{data.byDay7[0]?.day.slice(5)}</span>
-            <span>{data.byDay7[data.byDay7.length - 1]?.day.slice(5)}</span>
+            <span>{range7?.by_day[0]?.day.slice(5) ?? ""}</span>
+            <span>
+              {range7?.by_day[range7.by_day.length - 1]?.day.slice(5) ?? ""}
+            </span>
           </div>
         </GlassCard>
       </div>
@@ -119,42 +143,48 @@ export function Dashboard() {
       <div className="grid gap-4 lg:grid-cols-2">
         <GlassCard delay={0.35}>
           <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
-            Top 5 keys · all-time
+            Top 5 keys · last 30 days
           </div>
           <div className="mt-4 space-y-3">
-            {top5.map((k, i) => {
-              const pct = (k.count / top5Max) * 100;
-              return (
-                <motion.div
-                  key={k.code}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.45 + i * 0.06 }}
-                  className="flex items-center gap-3"
-                >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[var(--color-accent-soft)] text-xs font-semibold">
-                    {keyLabel(k.code)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="relative h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
-                      <motion.div
-                        className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-violet-400 to-sky-400"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{
-                          duration: 0.9,
-                          delay: 0.5 + i * 0.06,
-                          ease: [0.16, 1, 0.3, 1],
-                        }}
-                      />
+            {top5.length === 0 ? (
+              <div className="py-8 text-center text-sm text-[var(--color-text-muted)]">
+                No data yet.
+              </div>
+            ) : (
+              top5.map((k, i) => {
+                const pct = (k.count / top5Max) * 100;
+                return (
+                  <motion.div
+                    key={k.code}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: 0.45 + i * 0.06 }}
+                    className="flex items-center gap-3"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[var(--color-accent-soft)] text-xs font-semibold">
+                      {keyLabel(k.code)}
                     </div>
-                  </div>
-                  <div className="w-20 text-right text-xs tabular-nums text-[var(--color-text-muted)]">
-                    {formatNumber(k.count)}
-                  </div>
-                </motion.div>
-              );
-            })}
+                    <div className="flex-1">
+                      <div className="relative h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
+                        <motion.div
+                          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-violet-400 to-sky-400"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{
+                            duration: 0.9,
+                            delay: 0.5 + i * 0.06,
+                            ease: [0.16, 1, 0.3, 1],
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="w-20 text-right text-xs tabular-nums text-[var(--color-text-muted)]">
+                      {formatNumber(k.count)}
+                    </div>
+                  </motion.div>
+                );
+              })
+            )}
           </div>
         </GlassCard>
 
@@ -164,10 +194,7 @@ export function Dashboard() {
           </div>
           <div className="mt-4">
             <BarChart
-              data={data.hourly.map((v, h) => ({
-                label: String(h),
-                value: v,
-              }))}
+              data={hourly.map((v, h) => ({ label: String(h), value: v }))}
               height={140}
             />
           </div>
