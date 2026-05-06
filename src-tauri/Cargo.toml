@@ -28,13 +28,6 @@ chrono = { version = "0.4", features = ["serde"] }
 parking_lot = "0.12"
 log = "0.4"
 env_logger = "0.11"
-sysinfo = { version = "0.32", default-features = false, features = ["system"] }
-
-[target.'cfg(target_os = "windows")'.dependencies]
-windows-sys = { version = "0.59", features = [
-    "Win32_Foundation",
-    "Win32_System_Performance",
-] }
 
 [profile.release]
 panic = "abort"

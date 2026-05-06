@@ -56,17 +56,6 @@ export interface LivePulse {
   total: number;
 }
 
-export interface PerfSample {
-  cpu_pct: number;
-  rss_mb: number;
-  gpu_pct: number | null;
-  gpu_3d: number | null;
-  gpu_compute: number | null;
-  gpu_copy: number | null;
-  process_count: number;
-  uptime_s: number;
-}
-
 export const api = {
   appInfo: () => invoke<AppInfo>("app_info"),
   setPaused: (paused: boolean) => invoke<void>("set_paused", { paused }),
@@ -89,8 +78,6 @@ export const api = {
 
   onLivePulse: (cb: (p: LivePulse) => void): Promise<UnlistenFn> =>
     listen<LivePulse>("live-pulse", (e) => cb(e.payload)),
-  onPerfSample: (cb: (p: PerfSample) => void): Promise<UnlistenFn> =>
-    listen<PerfSample>("perf-sample", (e) => cb(e.payload)),
 };
 
 /// True when this is a real Tauri runtime (window has `__TAURI_INTERNALS__`).

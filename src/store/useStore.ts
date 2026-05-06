@@ -97,8 +97,6 @@ interface AppState {
   setWidgetMode: (m: WidgetMode) => void;
   widgetSnap: boolean;
   setWidgetSnap: (v: boolean) => void;
-  perfHud: boolean;
-  setPerfHud: (v: boolean) => void;
   widgetOpacity: number;
   setWidgetOpacity: (n: number) => void;
   widgetTint: string;
@@ -352,16 +350,6 @@ export const useStore = create<AppState>((set, get) => ({
       localStorage.setItem("kc-widget-snap", v ? "1" : "0");
     }
     set({ widgetSnap: v });
-  },
-  perfHud: (() => {
-    if (typeof localStorage === "undefined") return false;
-    return localStorage.getItem("kc-perf-hud") === "1";
-  })(),
-  setPerfHud: (v) => {
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem("kc-perf-hud", v ? "1" : "0");
-    }
-    set({ perfHud: v });
   },
   widgetOpacity: (() => {
     if (typeof localStorage === "undefined") return DEFAULT_WIDGET_OPACITY;

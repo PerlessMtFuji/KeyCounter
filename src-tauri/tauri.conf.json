@@ -19,13 +19,9 @@
         "minWidth": 920,
         "minHeight": 600,
         "decorations": true,
-        "transparent": true,
+        "transparent": false,
         "resizable": true,
-        "center": true,
-        "windowEffects": {
-          "effects": ["mica", "acrylic", "sidebar", "fullScreenUI"],
-          "state": "active"
-        }
+        "center": true
       },
       {
         "label": "widget",

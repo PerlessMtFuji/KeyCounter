@@ -1,6 +1,5 @@
 mod hook;
 mod keycode;
-mod perf;
 mod permissions;
 mod state;
 mod store;
@@ -286,11 +285,6 @@ pub fn run() {
                     _ => {}
                 })
                 .build(app)?;
-
-            // Performance sampler thread: emits a `perf-sample` event every
-            // second with own-process CPU/RSS and Windows GPU utilization.
-            // Frontend HUD subscribes to this when toggled (Ctrl+Shift+P).
-            perf::spawn(app.handle().clone());
 
             // Live emitter thread: every 200 ms read the live counter delta and
             // push a `live-pulse` event to the frontend. Also drives the tray

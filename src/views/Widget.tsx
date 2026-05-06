@@ -1,5 +1,4 @@
 import { useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
 import { api, isTauri } from "@/lib/api";
@@ -26,14 +25,19 @@ export function Widget() {
   const widgetTint = useStore((s) => s.widgetTint);
   const t = useT();
 
-  // Subscribe to live-pulse events (broadcast by backend to all windows)
+  // Subscribe to live-pulse events (broadcast by backend to all windows).
+  // We skip recordPulse when this widget window isn't visible — Tauri keeps
+  // emitting to hidden webviews, but updating the store there triggers
+  // pointless re-renders + ripple animations the user can't see.
   useEffect(() => {
     if (!isTauri()) return;
     let mounted = true;
     let unlisten: (() => void) | null = null;
     api
       .onLivePulse((p) => {
-        if (mounted) recordPulse(p.delta);
+        if (!mounted) return;
+        if (typeof document !== "undefined" && document.hidden) return;
+        recordPulse(p.delta);
       })
       .then((u) => {
         if (mounted) unlisten = u;
@@ -215,15 +219,12 @@ function CompactWidget({
         data-tauri-drag-region
         className="relative flex h-4 w-4 shrink-0 items-center justify-center"
       >
-        <AnimatePresence>
-          <motion.span
+        {pulseTick > 0 && (
+          <span
             key={pulseTick}
-            initial={{ scale: 0.6, opacity: 0.55 }}
-            animate={{ scale: 2.4, opacity: 0 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute inset-0 rounded-full bg-emerald-400/40"
+            className="kc-ripple absolute inset-0 rounded-full bg-emerald-400/40"
           />
-        </AnimatePresence>
+        )}
         <span
           className={`relative h-1.5 w-1.5 rounded-full ${
             paused
@@ -236,7 +237,7 @@ function CompactWidget({
       </span>
       <AnimatedNumber
         value={liveKpm}
-        duration={0.6}
+        snap
         format={(n) => Math.round(n).toString()}
         className="text-sm font-semibold leading-none tabular-nums text-[var(--color-text-primary)]"
       />
@@ -390,15 +391,12 @@ function WidgetHeader({
     <div data-tauri-drag-region className="flex items-center justify-between">
       <div className="flex items-center gap-2">
         <span className="relative flex h-5 w-5 items-center justify-center">
-          <AnimatePresence>
-            <motion.span
+          {pulseTick > 0 && (
+            <span
               key={pulseTick}
-              initial={{ scale: 0.6, opacity: 0.55 }}
-              animate={{ scale: 2.4, opacity: 0 }}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute inset-0 rounded-full bg-emerald-400/40"
+              className="kc-ripple absolute inset-0 rounded-full bg-emerald-400/40"
             />
-          </AnimatePresence>
+          )}
           <span
             className={`relative h-1.5 w-1.5 rounded-full ${
               paused
@@ -485,7 +483,7 @@ function WidgetBody({ liveKpm, todayTotal, labels }: BodyProps) {
         <div className="bg-gradient-to-r from-violet-300 to-sky-300 bg-clip-text text-3xl font-semibold leading-none tracking-tight tabular-nums text-transparent">
           <AnimatedNumber
             value={liveKpm}
-            duration={0.6}
+            snap
             format={(n) => Math.round(n).toString()}
           />
         </div>
