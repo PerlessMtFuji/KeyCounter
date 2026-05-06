@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { StatCard } from "@/components/ui/StatCard";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
@@ -39,24 +38,14 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <motion.h1
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-3xl font-semibold tracking-tight"
-        >
+        <h1 className="text-3xl font-semibold tracking-tight">
           {t("dashboard.title")}
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mt-1 text-sm text-[var(--color-text-muted)]"
-        >
+        </h1>
+        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
           {isFresh
             ? t("dashboard.subtitleFresh")
             : t("dashboard.subtitleNormal")}
-        </motion.p>
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -153,37 +142,25 @@ export function Dashboard() {
                 {t("common.noData")}
               </div>
             ) : (
-              top5.map((k, i) => {
+              top5.map((k) => {
                 const pct = (k.count / top5Max) * 100;
                 return (
-                  <motion.div
-                    key={k.code}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: 0.45 + i * 0.06 }}
-                    className="flex items-center gap-3"
-                  >
+                  <div key={k.code} className="flex items-center gap-3">
                     <div className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--color-glass-stroke)] bg-[var(--color-accent-soft)] px-2 text-xs font-semibold whitespace-nowrap">
                       {keyLabel(k.code)}
                     </div>
                     <div className="flex-1">
                       <div className="relative h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
-                        <motion.div
+                        <div
                           className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-violet-400 to-sky-400"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${pct}%` }}
-                          transition={{
-                            duration: 0.9,
-                            delay: 0.5 + i * 0.06,
-                            ease: [0.16, 1, 0.3, 1],
-                          }}
+                          style={{ width: `${pct}%` }}
                         />
                       </div>
                     </div>
                     <div className="w-20 text-right text-xs tabular-nums text-[var(--color-text-muted)]">
                       {formatNumber(k.count)}
                     </div>
-                  </motion.div>
+                  </div>
                 );
               })
             )}

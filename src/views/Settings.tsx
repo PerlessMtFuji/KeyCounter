@@ -129,14 +129,9 @@ export function Settings() {
   return (
     <div className="space-y-6">
       <div>
-        <motion.h1
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-3xl font-semibold tracking-tight"
-        >
+        <h1 className="text-3xl font-semibold tracking-tight">
           {t("settings.title")}
-        </motion.h1>
+        </h1>
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">
           {t("settings.subtitle")}
         </p>
@@ -177,7 +172,7 @@ export function Settings() {
                 <button
                   key={k}
                   onClick={() => setTheme(k)}
-                  className={`rounded-md px-3 py-1.5 transition ${
+                  className={`rounded-md px-3 py-1.5 ${
                     theme === k
                       ? "bg-[var(--color-accent-soft)] text-[var(--color-text-primary)]"
                       : "text-[var(--color-text-muted)]"
@@ -197,7 +192,7 @@ export function Settings() {
                 <button
                   key={k}
                   onClick={() => setLang(k)}
-                  className={`rounded-md px-3 py-1.5 transition ${
+                  className={`rounded-md px-3 py-1.5 ${
                     lang === k
                       ? "bg-[var(--color-accent-soft)] text-[var(--color-text-primary)]"
                       : "text-[var(--color-text-muted)]"
@@ -239,7 +234,7 @@ export function Settings() {
                 <button
                   key={m}
                   onClick={() => setWidgetMode(m)}
-                  className={`rounded-md px-3 py-1.5 transition ${
+                  className={`rounded-md px-3 py-1.5 ${
                     widgetMode === m
                       ? "bg-[var(--color-accent-soft)] text-[var(--color-text-primary)]"
                       : "text-[var(--color-text-muted)]"
@@ -297,7 +292,7 @@ export function Settings() {
                   <button
                     onClick={() => setWidgetTint("")}
                     disabled={widgetTint === ""}
-                    className="rounded-md border border-[var(--color-glass-stroke)] bg-white/[0.03] px-2.5 py-1 text-[11px] text-[var(--color-text-muted)] transition hover:bg-white/[0.06] disabled:opacity-40"
+                    className="rounded-md border border-[var(--color-glass-stroke)] bg-white/[0.03] px-2.5 py-1 text-[11px] text-[var(--color-text-muted)] hover:bg-white/[0.06] disabled:opacity-40"
                   >
                     {t("widget.tintReset")}
                   </button>
@@ -337,7 +332,7 @@ export function Settings() {
             <button
               onClick={onExport}
               disabled={!isTauri() || busy}
-              className="rounded-lg border border-[var(--color-glass-stroke)] bg-white/[0.03] px-3 py-1.5 text-xs font-medium transition hover:bg-white/[0.06] disabled:opacity-40"
+              className="rounded-lg border border-[var(--color-glass-stroke)] bg-white/[0.03] px-3 py-1.5 text-xs font-medium hover:bg-white/[0.06] disabled:opacity-40"
             >
               {t("settings.exportButton")}
             </button>
@@ -353,7 +348,7 @@ export function Settings() {
               <button
                 onClick={() => setConfirmReset(true)}
                 disabled={!isTauri()}
-                className="rounded-lg border border-rose-400/30 bg-rose-400/10 px-3 py-1.5 text-xs font-medium text-rose-300 transition hover:bg-rose-400/20 disabled:opacity-40"
+                className="rounded-lg border border-rose-400/30 bg-rose-400/10 px-3 py-1.5 text-xs font-medium text-rose-300 hover:bg-rose-400/20 disabled:opacity-40"
               >
                 {t("settings.resetButton")}
               </button>

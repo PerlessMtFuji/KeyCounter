@@ -1,5 +1,4 @@
 import { useEffect, useMemo } from "react";
-import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { KeyboardHeatmap } from "@/components/heatmap/KeyboardHeatmap";
 import { PunchCard } from "@/components/charts/PunchCard";
@@ -53,14 +52,9 @@ export function Heatmap() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <motion.h1
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-3xl font-semibold tracking-tight"
-          >
+          <h1 className="text-3xl font-semibold tracking-tight">
             {t("heatmap.title")}
-          </motion.h1>
+          </h1>
           <p className="mt-1 text-sm text-[var(--color-text-muted)]">
             {t("heatmap.subtitle")}
           </p>
@@ -84,7 +78,7 @@ export function Heatmap() {
                 <button
                   key={r.id}
                   onClick={() => setHeatmapRange(r.id)}
-                  className={`relative rounded-lg px-3 py-1.5 transition ${
+                  className={`relative rounded-lg px-3 py-1.5 ${
                     active
                       ? "bg-[var(--color-accent-soft)] text-[var(--color-text-primary)]"
                       : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"

@@ -1,5 +1,3 @@
-import { motion } from "framer-motion";
-
 interface Slice {
   label: string;
   value: number;
@@ -42,8 +40,9 @@ export function Donut({
           const dasharray = `${len} ${c - len}`;
           const dashoffset = -offset;
           offset += len;
+          void i;
           return (
-            <motion.circle
+            <circle
               key={s.label}
               cx={size / 2}
               cy={size / 2}
@@ -53,13 +52,7 @@ export function Donut({
               strokeWidth={thickness}
               strokeLinecap="round"
               strokeDasharray={dasharray}
-              initial={{ strokeDashoffset: dashoffset + len, opacity: 0 }}
-              animate={{ strokeDashoffset: dashoffset, opacity: 1 }}
-              transition={{
-                duration: 1,
-                delay: 0.1 + i * 0.08,
-                ease: [0.16, 1, 0.3, 1],
-              }}
+              strokeDashoffset={dashoffset}
             />
           );
         })}

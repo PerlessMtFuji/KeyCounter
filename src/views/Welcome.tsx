@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { open } from "@tauri-apps/plugin-shell";
 import { useStore } from "@/store/useStore";
 import { useT } from "@/lib/i18n";
@@ -12,12 +11,7 @@ export function Welcome() {
 
   return (
     <div className="bg-fallback noise relative flex h-full w-full items-center justify-center overflow-hidden p-8">
-      <motion.div
-        initial={{ opacity: 0, y: 16, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="glass relative w-full max-w-xl rounded-3xl p-10"
-      >
+      <div className="glass relative w-full max-w-xl rounded-3xl p-10">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 to-orange-400 shadow-lg shadow-orange-500/40">
             <svg viewBox="0 0 24 24" className="h-5 w-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -59,18 +53,18 @@ export function Welcome() {
         <div className="mt-8 flex gap-3">
           <button
             onClick={() => open(MAC_PRIVACY_URL).catch(console.error)}
-            className="rounded-xl bg-[var(--color-accent)] px-5 py-2.5 text-sm font-medium text-white transition hover:brightness-110"
+            className="rounded-xl bg-[var(--color-accent)] px-5 py-2.5 text-sm font-medium text-white hover:brightness-110"
           >
             {t("welcome.openButton")}
           </button>
           <button
             onClick={() => checkPermissions()}
-            className="rounded-xl border border-[var(--color-glass-stroke)] px-5 py-2.5 text-sm font-medium text-[var(--color-text-muted)] transition hover:text-[var(--color-text-primary)]"
+            className="rounded-xl border border-[var(--color-glass-stroke)] px-5 py-2.5 text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
           >
             {t("welcome.recheckButton")}
           </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

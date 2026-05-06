@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Donut } from "@/components/charts/Donut";
 import { useStore } from "@/store/useStore";
@@ -44,14 +43,9 @@ export function Stats() {
   return (
     <div className="space-y-6">
       <div>
-        <motion.h1
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-3xl font-semibold tracking-tight"
-        >
+        <h1 className="text-3xl font-semibold tracking-tight">
           {t("stats.title")}
-        </motion.h1>
+        </h1>
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">
           {t("stats.subtitle")}
         </p>
@@ -71,13 +65,7 @@ export function Stats() {
               top20.map((k, i) => {
                 const pct = (k.count / max) * 100;
                 return (
-                  <motion.div
-                    key={k.code}
-                    initial={{ opacity: 0, x: -6 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.1 + i * 0.025 }}
-                    className="flex items-center gap-3"
-                  >
+                  <div key={k.code} className="flex items-center gap-3">
                     <span className="w-5 text-right text-[10px] tabular-nums text-[var(--color-text-muted)]">
                       {i + 1}
                     </span>
@@ -86,22 +74,16 @@ export function Stats() {
                     </div>
                     <div className="flex-1">
                       <div className="relative h-1 overflow-hidden rounded-full bg-white/[0.04]">
-                        <motion.div
+                        <div
                           className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-violet-400 to-sky-400"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${pct}%` }}
-                          transition={{
-                            duration: 0.8,
-                            delay: 0.15 + i * 0.025,
-                            ease: [0.16, 1, 0.3, 1],
-                          }}
+                          style={{ width: `${pct}%` }}
                         />
                       </div>
                     </div>
                     <div className="w-20 text-right text-xs tabular-nums text-[var(--color-text-muted)]">
                       {formatNumber(k.count)}
                     </div>
-                  </motion.div>
+                  </div>
                 );
               })
             )}
@@ -149,11 +131,9 @@ export function Stats() {
               {backHint}
             </div>
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.04]">
-              <motion.div
+              <div
                 className="h-full rounded-full bg-gradient-to-r from-amber-300 to-rose-400"
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min(100, back * 600)}%` }}
-                transition={{ duration: 1.1, delay: 0.4 }}
+                style={{ width: `${Math.min(100, back * 600)}%` }}
               />
             </div>
           </GlassCard>
@@ -170,19 +150,16 @@ export function Stats() {
               {t("common.notEnough")}
             </div>
           ) : (
-            least.map((k, i) => (
-              <motion.div
+            least.map((k) => (
+              <div
                 key={k.code}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.25 + i * 0.04 }}
                 className="rounded-xl border border-[var(--color-glass-stroke)] bg-white/[0.02] p-3 text-center"
               >
                 <div className="text-lg font-semibold">{keyLabel(k.code)}</div>
                 <div className="mt-1 text-[10px] tabular-nums text-[var(--color-text-muted)]">
                   {formatNumber(k.count)}
                 </div>
-              </motion.div>
+              </div>
             ))
           )}
         </div>

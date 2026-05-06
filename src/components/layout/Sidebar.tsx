@@ -56,7 +56,7 @@ export function Sidebar() {
             <button
               key={it.view}
               onClick={() => setView(it.view)}
-              className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition ${
+              className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm ${
                 active
                   ? "text-[var(--color-text-primary)]"
                   : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
@@ -90,7 +90,7 @@ export function Sidebar() {
         <button
           onClick={openWidget}
           disabled={!isTauri()}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-glass-stroke)] bg-white/[0.02] px-3 py-2 text-[11px] font-medium text-[var(--color-text-muted)] transition hover:bg-white/[0.05] hover:text-[var(--color-text-primary)] disabled:opacity-40"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-glass-stroke)] bg-white/[0.02] px-3 py-2 text-[11px] font-medium text-[var(--color-text-muted)] hover:bg-white/[0.05] hover:text-[var(--color-text-primary)] disabled:opacity-40"
         >
           <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -100,15 +100,15 @@ export function Sidebar() {
         </button>
         <button
           onClick={togglePaused}
-          className="glass flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm transition hover:bg-white/[0.06]"
+          className="glass flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm hover:bg-white/[0.06]"
         >
           <div className="flex items-center gap-2.5">
             <span className="relative flex h-2 w-2">
-              <span
-                className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                  paused ? "bg-amber-400" : "animate-ping bg-emerald-400"
-                }`}
-              />
+              {/* Static dot — `animate-ping` was an infinite CSS keyframe
+                  (1s loop, opacity + scale) that ran for the entire app
+                  lifetime and forced the layer to be re-composited each
+                  frame, even when the sidebar wasn't visible (it never
+                  unmounts). Color alone is enough to communicate state. */}
               <span
                 className={`relative inline-flex h-2 w-2 rounded-full ${
                   paused ? "bg-amber-400" : "bg-emerald-400"

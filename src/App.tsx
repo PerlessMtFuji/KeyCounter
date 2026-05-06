@@ -117,29 +117,44 @@ function WidgetShell() {
     init();
   }, [init]);
 
-  useEffect(() => {
-    if (!isTauri()) return;
-    let mounted = true;
-    let unlisten: (() => void) | null = null;
-    api.onLivePulse((p) => {
-      if (mounted) recordPulse(p.delta);
-    }).then((u) => {
-      if (mounted) unlisten = u;
-      else u();
-    });
-    return () => {
-      mounted = false;
-      unlisten?.();
-    };
-  }, []);
+  // The widget shell deliberately doesn't subscribe to live-pulse — the
+  // inner <Widget /> does, with a `document.hidden` guard. Two
+  // subscriptions in the same JS context would call recordPulse twice
+  // per emit and double-count the live KPM.
 
+  // Refresh timers paused while the widget is hidden — backend already
+  // skips emits when no window is visible, but these polled commands
+  // would still fire data fetches the user can't see.
   useEffect(() => {
     if (!isTauri()) return;
-    const liveTimer = setInterval(refreshLive, 2000);
-    const allTimer = setInterval(refreshAll, 5_000);
+    let liveTimer: ReturnType<typeof setInterval> | undefined;
+    let allTimer: ReturnType<typeof setInterval> | undefined;
+
+    function start() {
+      stop();
+      liveTimer = setInterval(refreshLive, 2000);
+      allTimer = setInterval(refreshAll, 5_000);
+    }
+    function stop() {
+      if (liveTimer) clearInterval(liveTimer);
+      if (allTimer) clearInterval(allTimer);
+      liveTimer = undefined;
+      allTimer = undefined;
+    }
+    function onVisibility() {
+      if (document.hidden) stop();
+      else {
+        refreshLive().catch(() => {});
+        refreshAll().catch(() => {});
+        start();
+      }
+    }
+
+    if (!document.hidden) start();
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
-      clearInterval(liveTimer);
-      clearInterval(allTimer);
+      document.removeEventListener("visibilitychange", onVisibility);
+      stop();
     };
   }, [refreshLive, refreshAll]);
 
@@ -162,25 +177,60 @@ function MainShell() {
     if (!isTauri()) return;
     let mounted = true;
     let unlisten: (() => void) | null = null;
-    api.onLivePulse((p) => {
-      if (mounted) recordPulse(p.delta);
-    }).then((u) => {
-      if (mounted) unlisten = u;
-      else u();
-    });
+    api
+      .onLivePulse((p) => {
+        if (!mounted) return;
+        // Skip pulse handling when this window is hidden — Tauri keeps
+        // emitting events to hidden webviews, but the ripple animation
+        // and store updates are wasted work no one can see.
+        if (typeof document !== "undefined" && document.hidden) return;
+        recordPulse(p.delta);
+      })
+      .then((u) => {
+        if (mounted) unlisten = u;
+        else u();
+      });
     return () => {
       mounted = false;
       unlisten?.();
     };
   }, []);
 
+  // Refresh timers — only run while the window is actually visible.
+  // Hiding the window to the tray was previously still ticking these
+  // every 2 / 5 seconds, fetching data the user couldn't see.
   useEffect(() => {
     if (!isTauri()) return;
-    const liveTimer = setInterval(refreshLive, 2000);
-    const allTimer = setInterval(refreshAll, 5_000);
+    let liveTimer: ReturnType<typeof setInterval> | undefined;
+    let allTimer: ReturnType<typeof setInterval> | undefined;
+
+    function start() {
+      stop();
+      liveTimer = setInterval(refreshLive, 2000);
+      allTimer = setInterval(refreshAll, 5_000);
+    }
+    function stop() {
+      if (liveTimer) clearInterval(liveTimer);
+      if (allTimer) clearInterval(allTimer);
+      liveTimer = undefined;
+      allTimer = undefined;
+    }
+    function onVisibility() {
+      if (document.hidden) {
+        stop();
+      } else {
+        // Refresh once immediately on re-show, then resume the timers.
+        refreshLive().catch(() => {});
+        refreshAll().catch(() => {});
+        start();
+      }
+    }
+
+    if (!document.hidden) start();
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
-      clearInterval(liveTimer);
-      clearInterval(allTimer);
+      document.removeEventListener("visibilitychange", onVisibility);
+      stop();
     };
   }, [refreshLive, refreshAll]);
 

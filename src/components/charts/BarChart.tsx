@@ -1,5 +1,3 @@
-import { motion } from "framer-motion";
-
 interface Props {
   data: { label: string; value: number }[];
   height?: number;
@@ -30,19 +28,14 @@ export function BarChart({ data, height = 140, showLabels = true }: Props) {
           const w = barWidth * 0.64;
           const y = height - h;
           return (
-            <motion.rect
+            <rect
               key={`${d.label}-${i}`}
               x={x}
+              y={y}
               width={w}
+              height={h}
               fill="url(#barGrad)"
               rx="0.6"
-              initial={{ y: height, height: 0, opacity: 0 }}
-              animate={{ y, height: h, opacity: 1 }}
-              transition={{
-                duration: 0.7,
-                delay: i * 0.012,
-                ease: [0.16, 1, 0.3, 1],
-              }}
             />
           );
         })}

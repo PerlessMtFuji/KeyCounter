@@ -21,7 +21,7 @@ export function StatCard({
   format,
 }: Props) {
   return (
-    <GlassCard delay={delay} className="group">
+    <GlassCard delay={delay}>
       <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-muted)] uppercase">
         {label}
       </div>
@@ -38,11 +38,6 @@ export function StatCard({
       {hint && (
         <div className="mt-2 text-xs text-[var(--color-text-muted)]">{hint}</div>
       )}
-      {/* hover shimmer */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.04] to-transparent transition-transform duration-[1200ms] group-hover:translate-x-full"
-      />
     </GlassCard>
   );
 }

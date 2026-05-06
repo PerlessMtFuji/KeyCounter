@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { useStore } from "@/store/useStore";
 import { formatNumber } from "@/lib/format";
@@ -35,14 +34,9 @@ export function Achievements() {
   return (
     <div className="space-y-6">
       <div>
-        <motion.h1
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-3xl font-semibold tracking-tight"
-        >
+        <h1 className="text-3xl font-semibold tracking-tight">
           {t("ach.title")}
-        </motion.h1>
+        </h1>
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">
           {earned} {t("common.of")} {achievements.length}{" "}
           {t("common.unlocked")}
@@ -72,15 +66,9 @@ export function Achievements() {
                 {!a.earned && (
                   <div className="mt-3">
                     <div className="relative h-1 overflow-hidden rounded-full bg-white/[0.05]">
-                      <motion.div
+                      <div
                         className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-amber-300 to-orange-400"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${a.progress * 100}%` }}
-                        transition={{
-                          duration: 1,
-                          delay: 0.2 + i * 0.04,
-                          ease: [0.16, 1, 0.3, 1],
-                        }}
+                        style={{ width: `${a.progress * 100}%` }}
                       />
                     </div>
                     <div className="mt-1 text-[10px] tabular-nums text-[var(--color-text-muted)]">

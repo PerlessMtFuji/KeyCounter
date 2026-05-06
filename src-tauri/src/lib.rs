@@ -302,28 +302,53 @@ pub fn run() {
                     let mut pulse_phase: u32 = 0;
                     // Cache the last frame ID we pushed to the tray so we
                     // skip the redundant set_icon calls during long idle
-                    // stretches and on every other typing tick (where the
-                    // frame doesn't actually change).
+                    // stretches.
                     let mut last_frame_id: u8 = 255;
+                    // 500 ms tick (was 200 ms). At 5 Hz the live KPM number
+                    // updated faster than a human reads — 2 Hz is plenty
+                    // for "this number is live" feedback and halves the
+                    // IPC + React work tied to each emit.
+                    const TICK: Duration = Duration::from_millis(500);
+                    // After 1 s of no activity the tray snaps to idle.
+                    // Threshold scaled to the new tick rate (was 5 ticks at
+                    // 200 ms = 1 s; now 2 ticks at 500 ms = 1 s).
+                    const IDLE_THRESHOLD: u32 = 2;
                     loop {
-                        thread::sleep(Duration::from_millis(200));
+                        thread::sleep(TICK);
                         let now = live_counter.load(Ordering::Relaxed);
                         let delta = now - last;
+
+                        let any_window_visible = ["main", "widget"].iter().any(|label| {
+                            app_handle
+                                .get_webview_window(label)
+                                .and_then(|w| w.is_visible().ok())
+                                .unwrap_or(false)
+                        });
+
                         if delta > 0 {
                             last = now;
                             idle_ticks = 0;
                             pulse_phase = pulse_phase.wrapping_add(1);
-                            let _ = app_handle.emit("live-pulse", LivePulse { delta, total: now });
+                            // Skip the IPC entirely when there's no UI to
+                            // receive it — the user typed but every window
+                            // is hidden to tray. We still updated `last`
+                            // above so the next emit shows the cumulative
+                            // delta when a window comes back.
+                            if any_window_visible {
+                                let _ =
+                                    app_handle.emit("live-pulse", LivePulse { delta, total: now });
+                            }
                         } else {
                             idle_ticks = idle_ticks.saturating_add(1);
                         }
 
                         // Tray icon: alternate between two pulse frames while
-                        // typing, snap to the dim "idle" frame after ~1 second
-                        // of inactivity. Only call set_icon when the frame
-                        // actually changes — Windows tray repaints on every
-                        // call and showed up in profiling as continuous CPU.
-                        let frame_id: u8 = if idle_ticks > 5 {
+                        // typing, snap to the dim idle frame after the idle
+                        // threshold elapses. Only call set_icon when the
+                        // frame actually changes — Windows tray repaints on
+                        // every call and showed up in profiling as
+                        // continuous CPU.
+                        let frame_id: u8 = if idle_ticks > IDLE_THRESHOLD {
                             0
                         } else if pulse_phase % 2 == 0 {
                             1

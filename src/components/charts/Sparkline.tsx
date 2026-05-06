@@ -1,5 +1,3 @@
-import { motion } from "framer-motion";
-
 interface Props {
   values: number[];
   height?: number;
@@ -40,14 +38,8 @@ export function Sparkline({ values, height = 60, stroke = "#a78bfa" }: Props) {
           <stop offset="100%" stopColor={stroke} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <motion.path
-        d={fill}
-        fill="url(#sparkFill)"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.4 }}
-      />
-      <motion.path
+      <path d={fill} fill="url(#sparkFill)" />
+      <path
         d={path}
         fill="none"
         stroke={stroke}
@@ -55,9 +47,6 @@ export function Sparkline({ values, height = 60, stroke = "#a78bfa" }: Props) {
         strokeLinecap="round"
         strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
       />
     </svg>
   );

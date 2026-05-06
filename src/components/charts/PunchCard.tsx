@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { useT, type TranslationKey } from "@/lib/i18n";
 
 interface Props {
@@ -37,16 +36,9 @@ export function PunchCard({ data }: Props) {
               const intensity = v / max;
               const radius = 4 + intensity * 7;
               return (
-                <motion.div
+                <div
                   key={`${dow}-${h}`}
                   className="flex aspect-square items-center justify-center"
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{
-                    duration: 0.4,
-                    delay: 0.2 + (dow * 24 + h) * 0.003,
-                    ease: [0.16, 1, 0.3, 1],
-                  }}
                 >
                   <div
                     style={{
@@ -59,7 +51,7 @@ export function PunchCard({ data }: Props) {
                     }}
                     className="rounded-full"
                   />
-                </motion.div>
+                </div>
               );
             }),
           )}

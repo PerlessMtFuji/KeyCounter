@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import type { DayTotal } from "@/lib/api";
 import { formatNumber } from "@/lib/format";
@@ -110,19 +109,13 @@ export function StreakCalendar({ data, days = 365 }: Props) {
               const intensity = cell.total > 0 ? cell.total / max : 0;
               const isFuture = cell.date > new Date();
               return (
-                <motion.div
+                <div
                   key={d}
-                  initial={{ opacity: 0, scale: 0.6 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{
-                    duration: 0.3,
-                    delay: 0.1 + (w * 7 + d) * 0.001,
-                  }}
                   onMouseEnter={() =>
                     setHover({ day: cell.day, total: cell.total })
                   }
                   onMouseLeave={() => setHover(null)}
-                  className="h-[10px] w-[10px] rounded-[2px] cursor-pointer transition-transform hover:scale-150"
+                  className="h-[10px] w-[10px] rounded-[2px] cursor-pointer"
                   style={{
                     background: isFuture
                       ? "transparent"

@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { KEYBOARD_60 } from "./keyboard-layout";
@@ -73,20 +72,10 @@ export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
                   ? `0 0 ${10 + intensity * 22}px rgba(${keyRgb},${intensity * 0.7})`
                   : "none";
               return (
-                <motion.div
+                <div
                   key={`${rowIdx}-${colIdx}`}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.45,
-                    delay: 0.04 + (rowIdx * 14 + colIdx) * 0.012,
-                    ease: [0.16, 1, 0.3, 1],
-                  }}
                   onMouseEnter={(e) => {
                     const r = e.currentTarget.getBoundingClientRect();
-                    // Default: float tooltip above the key. If the key is
-                    // close to the top of the viewport, flip it to below
-                    // so it stays in view.
                     const above = r.top > 80;
                     setHovered({
                       code,
@@ -98,7 +87,7 @@ export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
                     });
                   }}
                   onMouseLeave={() => setHovered(null)}
-                  className="relative flex cursor-pointer items-center justify-center rounded-lg border border-[var(--color-glass-stroke)] text-[11px] font-medium text-[var(--color-text-primary)] transition-transform duration-200 hover:scale-[1.06]"
+                  className="relative flex cursor-pointer items-center justify-center rounded-lg border border-[var(--color-glass-stroke)] text-[11px] font-medium text-[var(--color-text-primary)]"
                   style={{
                     width: w,
                     height: KEY_HEIGHT,
@@ -107,7 +96,7 @@ export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
                   }}
                 >
                   {overrides[code] ?? k.label}
-                </motion.div>
+                </div>
               );
             })}
           </div>

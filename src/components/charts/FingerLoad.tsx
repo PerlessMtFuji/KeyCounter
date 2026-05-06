@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { formatNumber } from "@/lib/format";
 import { useT, type TranslationKey } from "@/lib/i18n";
 
@@ -32,14 +31,7 @@ export function FingerLoad({ load }: Props) {
           const isThumb = i === 4 || i === 5;
           return (
             <div key={i} className="flex flex-1 flex-col items-center gap-1">
-              <motion.div
-                initial={{ scaleY: 0, opacity: 0 }}
-                animate={{ scaleY: 1, opacity: 1 }}
-                transition={{
-                  duration: 0.7,
-                  delay: 0.1 + i * 0.05,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
+              <div
                 className="relative w-full origin-bottom rounded-t-md"
                 style={{
                   height: `${24 + intensity * 80}px`,
