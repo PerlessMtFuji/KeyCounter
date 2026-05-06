@@ -27,11 +27,7 @@ pub struct KeyEvent {
 /// `paused` lets the UI silently drop events without uninstalling the hook
 /// (cheap toggle, no permission re-prompt on macOS). `live_counter` is bumped
 /// on every observed press for the emitter thread to read.
-pub fn spawn(
-    tx: Sender<KeyEvent>,
-    paused: Arc<AtomicBool>,
-    live_counter: Arc<AtomicI64>,
-) {
+pub fn spawn(tx: Sender<KeyEvent>, paused: Arc<AtomicBool>, live_counter: Arc<AtomicI64>) {
     thread::Builder::new()
         .name("kc-hook".into())
         .spawn(move || {

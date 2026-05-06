@@ -264,10 +264,7 @@ pub fn run() {
             None,
         ))
         .setup(|app| {
-            let data_dir = app
-                .path()
-                .app_data_dir()
-                .expect("app_data_dir unavailable");
+            let data_dir = app.path().app_data_dir().expect("app_data_dir unavailable");
             std::fs::create_dir_all(&data_dir).ok();
             let db_path = data_dir.join("keycounter.db");
 
@@ -338,8 +335,7 @@ pub fn run() {
                             last = now;
                             idle_ticks = 0;
                             pulse_phase = pulse_phase.wrapping_add(1);
-                            let _ = app_handle
-                                .emit("live-pulse", LivePulse { delta, total: now });
+                            let _ = app_handle.emit("live-pulse", LivePulse { delta, total: now });
                         } else {
                             idle_ticks = idle_ticks.saturating_add(1);
                         }
@@ -347,9 +343,7 @@ pub fn run() {
                         // Tray icon: alternate between two pulse frames while
                         // typing, snap to the dim "idle" frame after ~1 second
                         // of inactivity.
-                        if let Some(tray) =
-                            app_handle.tray_by_id("kc-tray")
-                        {
+                        if let Some(tray) = app_handle.tray_by_id("kc-tray") {
                             let frame = if idle_ticks > 5 {
                                 &idle
                             } else if pulse_phase % 2 == 0 {
@@ -373,9 +367,7 @@ pub fn run() {
                 if let Some(w) = app.get_webview_window(label) {
                     let w_clone = w.clone();
                     w.on_window_event(move |event| {
-                        if let tauri::WindowEvent::CloseRequested { api, .. } =
-                            event
-                        {
+                        if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                             api.prevent_close();
                             let _ = w_clone.hide();
                         }
