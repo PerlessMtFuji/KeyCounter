@@ -39,11 +39,7 @@
         "alwaysOnTop": true,
         "skipTaskbar": true,
         "shadow": false,
-        "visible": false,
-        "windowEffects": {
-          "effects": ["acrylic", "mica"],
-          "state": "active"
-        }
+        "visible": false
       }
     ],
     "security": {

@@ -184,18 +184,25 @@ function CompactWidget({
   kpmLabel,
   onClose,
 }: CompactProps) {
-  // Background is intentionally semi-transparent so the OS-level
-  // acrylic/mica effect (configured per-window in tauri.conf.json) shows
-  // through, blurring whatever's behind the widget on Windows 11. On
-  // platforms where windowEffects fall through, the rgba tint keeps the
-  // pill readable.
+  // True glass via CSS backdrop-filter on a transparent window. Chromium
+  // WebView2 blurs whatever the OS rendered behind the window — desktop,
+  // app windows, anything. We tried OS-level windowEffects first but
+  // they conflict with `transparent: true` on Windows and produced a
+  // flat gray fill instead of the desired blur.
+  // The semi-opaque tint keeps the pill readable even when running on
+  // a backend that doesn't support backdrop-filter (very rare on
+  // modern WebView2 / WebKit / Chromium).
   return (
     <div
       data-tauri-drag-region
       className="group relative flex h-full w-full select-none items-center gap-1.5 rounded-full border border-[var(--color-glass-stroke)] py-1 pr-2 pl-2"
       style={{
         background:
-          "color-mix(in srgb, var(--color-bg-elevated) 28%, transparent)",
+          "color-mix(in srgb, var(--color-bg-elevated) 42%, transparent)",
+        backdropFilter: "blur(24px) saturate(150%)",
+        WebkitBackdropFilter: "blur(24px) saturate(150%)",
+        boxShadow:
+          "0 12px 32px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(255, 255, 255, 0.05) inset",
       }}
     >
       <span
