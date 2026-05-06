@@ -9,7 +9,7 @@ import { formatNumber } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 
 const SIZE_FULL: [number, number] = [240, 110];
-const SIZE_COMPACT: [number, number] = [170, 40];
+const SIZE_COMPACT: [number, number] = [148, 36];
 
 // Standalone window: minimal always-on-top KPM/today display.
 // Each Tauri window has its own JS context, so we re-hydrate the store
@@ -150,20 +150,23 @@ function CompactWidget({
   kpmLabel,
   onClose,
 }: CompactProps) {
+  // Background is intentionally semi-transparent so the OS-level
+  // acrylic/mica effect (configured per-window in tauri.conf.json) shows
+  // through, blurring whatever's behind the widget on Windows 11. On
+  // platforms where windowEffects fall through, the rgba tint keeps the
+  // pill readable.
   return (
     <div
       data-tauri-drag-region
-      className="group relative flex h-full w-full select-none items-center gap-2.5 rounded-full border border-[var(--color-glass-stroke)] py-1.5 pr-3 pl-2.5"
+      className="group relative flex h-full w-full select-none items-center gap-1.5 rounded-full border border-[var(--color-glass-stroke)] py-1 pr-2 pl-2"
       style={{
         background:
-          "color-mix(in srgb, var(--color-bg-elevated) 92%, transparent)",
-        backdropFilter: "blur(20px) saturate(140%)",
-        WebkitBackdropFilter: "blur(20px) saturate(140%)",
+          "color-mix(in srgb, var(--color-bg-elevated) 28%, transparent)",
       }}
     >
       <span
         data-tauri-drag-region
-        className="relative flex h-5 w-5 shrink-0 items-center justify-center"
+        className="relative flex h-4 w-4 shrink-0 items-center justify-center"
       >
         <AnimatePresence>
           <motion.span
@@ -175,7 +178,7 @@ function CompactWidget({
           />
         </AnimatePresence>
         <span
-          className={`relative h-2 w-2 rounded-full ${
+          className={`relative h-1.5 w-1.5 rounded-full ${
             paused
               ? "bg-amber-400"
               : pulseTick > 0
@@ -188,18 +191,18 @@ function CompactWidget({
         value={liveKpm}
         duration={0.6}
         format={(n) => Math.round(n).toString()}
-        className="text-base font-semibold tabular-nums leading-none text-[var(--color-text-primary)]"
+        className="text-sm font-semibold tabular-nums leading-none text-[var(--color-text-primary)]"
       />
       <span
         data-tauri-drag-region
-        className="text-[10px] font-medium tracking-wider text-[var(--color-text-muted)] uppercase"
+        className="text-[9px] font-medium tracking-wider text-[var(--color-text-muted)] uppercase"
       >
         {kpmLabel}
       </span>
       <button
         onClick={onClose}
         title="Hide"
-        className="ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded text-[var(--color-text-muted)] opacity-0 transition group-hover:opacity-100 hover:text-[var(--color-text-primary)]"
+        className="ml-1 flex h-4 w-4 shrink-0 items-center justify-center rounded text-[var(--color-text-muted)] opacity-0 transition group-hover:opacity-100 hover:text-[var(--color-text-primary)]"
       >
         <svg
           viewBox="0 0 24 24"
