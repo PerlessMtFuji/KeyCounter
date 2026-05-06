@@ -213,58 +213,6 @@ fn snap_widget_to_taskbar(app: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-/// Toggle a focus-independent glass blur on the widget window.
-///
-/// Tauri's `WindowEffect::Acrylic` resolves to `ACCENT_ENABLE_ACRYLICBLURBEHIND`,
-/// which Microsoft hobbled on Windows 11 22H2+ — it renders as a flat tint and
-/// only blurs while the window is foreground. A floating widget is almost never
-/// foreground, so it permanently looked grey. Instead we use the older
-/// `ACCENT_ENABLE_BLURBEHIND` (Aero blur) via `window-vibrancy`, which still
-/// works regardless of focus. macOS gets `NSVisualEffectMaterial::HudWindow`.
-/// Linux: no-op (compositor blur isn't a portable primitive).
-#[tauri::command]
-fn set_widget_blur(enabled: bool, app: tauri::AppHandle) -> Result<(), String> {
-    let widget = app
-        .get_webview_window("widget")
-        .ok_or_else(|| "widget window not found".to_string())?;
-    apply_widget_blur(&widget, enabled)
-}
-
-#[cfg(target_os = "windows")]
-fn apply_widget_blur(w: &tauri::WebviewWindow, enabled: bool) -> Result<(), String> {
-    use window_vibrancy::{apply_blur, clear_blur};
-    if enabled {
-        // RGBA tint behind the blur. Low alpha keeps the wallpaper visible
-        // through the frosted glass.
-        apply_blur(w, Some((18, 18, 24, 125))).map_err(|e| e.to_string())
-    } else {
-        clear_blur(w).map_err(|e| e.to_string())
-    }
-}
-
-#[cfg(target_os = "macos")]
-fn apply_widget_blur(w: &tauri::WebviewWindow, enabled: bool) -> Result<(), String> {
-    use window_vibrancy::{
-        apply_vibrancy, clear_vibrancy, NSVisualEffectMaterial, NSVisualEffectState,
-    };
-    if enabled {
-        apply_vibrancy(
-            w,
-            NSVisualEffectMaterial::HudWindow,
-            Some(NSVisualEffectState::Active),
-            Some(8.0),
-        )
-        .map_err(|e| e.to_string())
-    } else {
-        clear_vibrancy(w).map_err(|e| e.to_string())
-    }
-}
-
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
-fn apply_widget_blur(_w: &tauri::WebviewWindow, _enabled: bool) -> Result<(), String> {
-    Ok(())
-}
-
 #[tauri::command]
 fn show_main(app: tauri::AppHandle) -> Result<(), String> {
     if let Some(w) = app.get_webview_window("main") {
@@ -433,7 +381,6 @@ pub fn run() {
             open_widget,
             show_main,
             snap_widget_to_taskbar,
-            set_widget_blur,
         ])
         .run(tauri::generate_context!())
         .expect("error while running KeyCounter");

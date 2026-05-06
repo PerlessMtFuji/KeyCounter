@@ -174,9 +174,6 @@ const en = {
     "Full = card with today total. Compact = customizable pill badge.",
   "widget.modeFull": "Full",
   "widget.modeCompact": "Compact",
-  "widget.blurLabel": "Glass blur",
-  "widget.blurHint":
-    "Frosted-glass blur of the wallpaper behind the widget. Windows / macOS only — Linux has no portable blur primitive.",
   "widget.opacityLabel": "Pill opacity",
   "widget.opacityHint":
     "How solid the compact pill looks against your wallpaper.",
@@ -377,9 +374,6 @@ const pl: typeof en = {
     "Pełny = karta z dzisiejszym totalem. Kompaktowy = konfigurowalna kapsułka.",
   "widget.modeFull": "Pełny",
   "widget.modeCompact": "Kompaktowy",
-  "widget.blurLabel": "Szklany blur",
-  "widget.blurHint":
-    "Rozmycie tapety za widżetem w stylu mlecznego szkła. Tylko Windows / macOS — Linux nie ma przenośnego API do blura.",
   "widget.opacityLabel": "Krycie kapsułki",
   "widget.opacityHint":
     "Jak mocno kapsułka odcina się od tapety.",

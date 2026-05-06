@@ -21,7 +21,6 @@ export function Widget() {
   const todayTotal = useStore((s) => s.today?.total ?? 0);
   const paused = useStore((s) => s.paused);
   const widgetMode = useStore((s) => s.widgetMode);
-  const widgetBlur = useStore((s) => s.widgetBlur);
   const widgetSnap = useStore((s) => s.widgetSnap);
   const widgetOpacity = useStore((s) => s.widgetOpacity);
   const widgetTint = useStore((s) => s.widgetTint);
@@ -65,17 +64,12 @@ export function Widget() {
     return () => clearInterval(i);
   }, []);
 
-  // Resize the window + toggle the focus-independent OS blur. Synced from
-  // the same store entries the Settings UI writes to, so toggles in the
-  // main app instantly reshape the floating widget. After resize, re-snap
-  // to the taskbar corner if snap is enabled (the new size would otherwise
+  // Resize the window when mode changes. After resize, re-snap to the
+  // taskbar corner if snap is enabled (the new size would otherwise
   // leave the widget anchored at its old top-left).
   useEffect(() => {
     if (!isTauri()) return;
     const [w, h] = widgetMode === "compact" ? SIZE_COMPACT : SIZE_FULL;
-    invoke("set_widget_blur", { enabled: widgetBlur }).catch((e) =>
-      console.error("set_widget_blur failed:", e),
-    );
     getCurrentWindow()
       .setSize(new LogicalSize(w, h))
       .then(() => {
@@ -84,7 +78,7 @@ export function Widget() {
         }
       })
       .catch((e) => console.error("widget setSize/snap failed:", e));
-  }, [widgetMode, widgetBlur]);
+  }, [widgetMode]);
 
   // Snap-to-taskbar lifecycle: re-position whenever snap is freshly
   // enabled, when the window becomes visible (open from sidebar/tray),
@@ -164,7 +158,6 @@ export function Widget() {
 
   return (
     <FullWidget
-      glassy={widgetBlur}
       liveKpm={liveKpm}
       pulseTick={pulseTick}
       todayTotal={todayTotal}
@@ -204,10 +197,8 @@ function CompactWidget({
   onClose,
 }: CompactProps) {
   // Translucent pill — gradient + inner highlights read as a glassy
-  // object even without any OS effect underneath. With the new "Glass
-  // blur" toggle on, ACCENT_ENABLE_BLURBEHIND on the HWND adds a real
-  // wallpaper blur behind the pill, and the user-controlled opacity
-  // dials in how much of it shows through.
+  // object. The user-controlled opacity and tint dial in the look
+  // against any wallpaper.
   const bg = useMemo(() => buildPillBackground(opacity, tint), [opacity, tint]);
   return (
     <div
@@ -339,7 +330,6 @@ function buildPillBackground(opacity: number, tint: string): string {
 }
 
 interface FullProps {
-  glassy: boolean;
   liveKpm: number;
   pulseTick: number;
   todayTotal: number;
@@ -351,7 +341,6 @@ interface FullProps {
 }
 
 function FullWidget({
-  glassy,
   liveKpm,
   pulseTick,
   todayTotal,
@@ -361,16 +350,10 @@ function FullWidget({
   onOpenMain,
   onClose,
 }: FullProps) {
-  // When glassy, drop the opaque gradient so the OS blur (applied to the
-  // HWND via window-vibrancy::apply_blur) shows through; a faint inner
-  // wash + highlight keeps the card readable over busy wallpapers.
-  const skin = glassy
-    ? "bg-white/[0.06] backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-1px_0_rgba(0,0,0,0.18)]"
-    : "bg-fallback noise";
   return (
     <div
       data-tauri-drag-region
-      className={`relative flex h-full w-full select-none flex-col overflow-hidden rounded-2xl border border-[var(--color-glass-stroke)] p-3 ${skin}`}
+      className="bg-fallback noise relative flex h-full w-full select-none flex-col overflow-hidden rounded-2xl border border-[var(--color-glass-stroke)] p-3"
     >
       <WidgetHeader
         pulseTick={pulseTick}

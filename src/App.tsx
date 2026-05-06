@@ -53,9 +53,6 @@ function useCrossWindowSettingsSync() {
             useStore.setState({ widgetMode: v });
           }
           break;
-        case "kc-widget-blur":
-          useStore.setState({ widgetBlur: v === "1" });
-          break;
         case "kc-widget-snap":
           useStore.setState({ widgetSnap: v === "1" });
           break;

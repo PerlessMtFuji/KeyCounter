@@ -56,8 +56,6 @@ export function Settings() {
   const setLang = useStore((s) => s.setLang);
   const widgetMode = useStore((s) => s.widgetMode);
   const setWidgetMode = useStore((s) => s.setWidgetMode);
-  const widgetBlur = useStore((s) => s.widgetBlur);
-  const setWidgetBlur = useStore((s) => s.setWidgetBlur);
   const widgetSnap = useStore((s) => s.widgetSnap);
   const setWidgetSnap = useStore((s) => s.setWidgetSnap);
   const widgetOpacity = useStore((s) => s.widgetOpacity);
@@ -254,12 +252,6 @@ export function Settings() {
               ))}
             </div>
           </div>
-          <Toggle
-            label={t("widget.blurLabel")}
-            hint={t("widget.blurHint")}
-            value={widgetBlur}
-            onChange={setWidgetBlur}
-          />
           {widgetMode === "compact" && (
             <>
               <div className="flex items-center justify-between py-3">
