@@ -310,6 +310,16 @@ pub fn run() {
                 }
             }
 
+            // Explicitly hide the widget window after setup. The
+            // `visible: false` in tauri.conf.json is sometimes ignored
+            // on Windows once the webview finishes loading and
+            // auto-shows the window. This is the only fully reliable
+            // way to keep the widget tucked away until the user asks
+            // for it via the sidebar / tray.
+            if let Some(widget) = app.get_webview_window("widget") {
+                let _ = widget.hide();
+            }
+
             app.manage(app_state);
             log::info!("KeyCounter started; db at {}", db_path.display());
             Ok(())

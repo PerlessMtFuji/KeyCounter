@@ -13,6 +13,8 @@ import { Welcome } from "@/views/Welcome";
 import { Widget } from "@/views/Widget";
 import { useStore, recordPulse } from "@/store/useStore";
 import { api, isTauri } from "@/lib/api";
+import type { LayoutId } from "@/lib/layouts";
+import type { Lang } from "@/lib/i18n";
 
 const VIEWS = {
   dashboard: Dashboard,
@@ -32,7 +34,47 @@ function getWindowLabel(): string {
   return internals?.metadata?.currentWindow?.label ?? "main";
 }
 
+// Cross-window settings sync: each Tauri window has its own JS context and
+// its own in-memory Zustand store. When the user changes a setting in one
+// window (e.g. widget mode in main → reshape the floating widget), the
+// other window's store needs to learn about it. localStorage is shared
+// across same-origin windows in the same WebView profile, and the
+// `storage` event fires in *other* contexts on every write — exactly
+// what we need.
+function useCrossWindowSettingsSync() {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.newValue === null) return;
+      const v = e.newValue;
+      switch (e.key) {
+        case "kc-widget-mode":
+          if (v === "full" || v === "compact") {
+            useStore.setState({ widgetMode: v });
+          }
+          break;
+        case "kc-theme":
+          if (v === "dark" || v === "light") {
+            useStore.getState().setTheme(v);
+          }
+          break;
+        case "kc-lang":
+          if (v === "en" || v === "pl") {
+            useStore.setState({ lang: v as Lang });
+          }
+          break;
+        case "kc-layout":
+          useStore.setState({ layout: v as LayoutId });
+          break;
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+}
+
 function App() {
+  useCrossWindowSettingsSync();
   const label = getWindowLabel();
   if (label === "widget") {
     return <WidgetShell />;
