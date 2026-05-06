@@ -161,30 +161,36 @@ fn flush(conn: &mut Connection, buffer: &mut Vec<KeyEvent>) {
     };
 
     {
-        let mut stmt = tx.prepare_cached(
-            "INSERT INTO keystrokes(day, code, count) VALUES (?1, ?2, ?3)
+        let mut stmt = tx
+            .prepare_cached(
+                "INSERT INTO keystrokes(day, code, count) VALUES (?1, ?2, ?3)
              ON CONFLICT(day, code) DO UPDATE SET count = count + excluded.count",
-        ).expect("prepare keystrokes upsert");
+            )
+            .expect("prepare keystrokes upsert");
         for ((day, code), n) in &per_day_code {
             if let Err(e) = stmt.execute(params![day, code, n]) {
                 log::error!("store: keystrokes upsert failed: {}", e);
             }
         }
 
-        let mut stmt = tx.prepare_cached(
-            "INSERT INTO minute_totals(minute, count) VALUES (?1, ?2)
+        let mut stmt = tx
+            .prepare_cached(
+                "INSERT INTO minute_totals(minute, count) VALUES (?1, ?2)
              ON CONFLICT(minute) DO UPDATE SET count = count + excluded.count",
-        ).expect("prepare minute upsert");
+            )
+            .expect("prepare minute upsert");
         for (minute, n) in &per_minute {
             if let Err(e) = stmt.execute(params![minute, n]) {
                 log::error!("store: minute upsert failed: {}", e);
             }
         }
 
-        let mut stmt = tx.prepare_cached(
-            "INSERT INTO modifier_usage(day, modifier, count) VALUES (?1, ?2, ?3)
+        let mut stmt = tx
+            .prepare_cached(
+                "INSERT INTO modifier_usage(day, modifier, count) VALUES (?1, ?2, ?3)
              ON CONFLICT(day, modifier) DO UPDATE SET count = count + excluded.count",
-        ).expect("prepare modifier upsert");
+            )
+            .expect("prepare modifier upsert");
         for ((day, group), n) in &per_day_mod {
             if let Err(e) = stmt.execute(params![day, group, n]) {
                 log::error!("store: modifier upsert failed: {}", e);
@@ -256,16 +262,14 @@ pub struct LiveSnapshot {
 // ---------------------------------------------------------------------------
 
 pub fn day_stats(conn: &Connection, day: &str) -> SqlResult<DayStats> {
-    let total: i64 = conn
-        .query_row(
-            "SELECT COALESCE(SUM(count), 0) FROM keystrokes WHERE day = ?1",
-            params![day],
-            |r| r.get(0),
-        )?;
-
-    let mut stmt = conn.prepare(
-        "SELECT code, count FROM keystrokes WHERE day = ?1 ORDER BY count DESC",
+    let total: i64 = conn.query_row(
+        "SELECT COALESCE(SUM(count), 0) FROM keystrokes WHERE day = ?1",
+        params![day],
+        |r| r.get(0),
     )?;
+
+    let mut stmt =
+        conn.prepare("SELECT code, count FROM keystrokes WHERE day = ?1 ORDER BY count DESC")?;
     let by_code = stmt
         .query_map(params![day], |r| {
             Ok(KeyCount {
@@ -277,9 +281,7 @@ pub fn day_stats(conn: &Connection, day: &str) -> SqlResult<DayStats> {
         .collect();
 
     let mut mods = ModifierBreakdown::default();
-    let mut stmt = conn.prepare(
-        "SELECT modifier, count FROM modifier_usage WHERE day = ?1",
-    )?;
+    let mut stmt = conn.prepare("SELECT modifier, count FROM modifier_usage WHERE day = ?1")?;
     let rows = stmt.query_map(params![day], |r| {
         let m: String = r.get(0)?;
         let c: i64 = r.get(1)?;
@@ -380,9 +382,7 @@ pub fn live_snapshot(conn: &Connection) -> SqlResult<LiveSnapshot> {
 }
 
 pub fn streak_days(conn: &Connection) -> SqlResult<i64> {
-    let mut stmt = conn.prepare(
-        "SELECT DISTINCT day FROM keystrokes ORDER BY day DESC",
-    )?;
+    let mut stmt = conn.prepare("SELECT DISTINCT day FROM keystrokes ORDER BY day DESC")?;
     let days: Vec<NaiveDate> = stmt
         .query_map([], |r| r.get::<_, String>(0))?
         .filter_map(Result::ok)
@@ -488,11 +488,9 @@ pub fn export_json(conn: &Connection) -> SqlResult<serde_json::Value> {
 }
 
 pub fn lifetime_total(conn: &Connection) -> SqlResult<i64> {
-    conn.query_row(
-        "SELECT COALESCE(SUM(count), 0) FROM keystrokes",
-        [],
-        |r| r.get(0),
-    )
+    conn.query_row("SELECT COALESCE(SUM(count), 0) FROM keystrokes", [], |r| {
+        r.get(0)
+    })
 }
 
 /// Hourly buckets (24 entries) covering the local day so far. Derived from
@@ -506,9 +504,7 @@ pub fn today_hourly(conn: &Connection) -> SqlResult<Vec<i64>> {
         .and_utc();
     let start_min = day_start.timestamp() / 60;
 
-    let mut stmt = conn.prepare(
-        "SELECT minute, count FROM minute_totals WHERE minute >= ?1",
-    )?;
+    let mut stmt = conn.prepare("SELECT minute, count FROM minute_totals WHERE minute >= ?1")?;
     let rows = stmt.query_map(params![start_min], |r| {
         Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?))
     })?;
@@ -530,9 +526,7 @@ pub fn punch_card_30d(conn: &Connection) -> SqlResult<Vec<Vec<i64>>> {
     let start = now - chrono::Duration::days(30);
     let start_min = start.timestamp() / 60;
 
-    let mut stmt = conn.prepare(
-        "SELECT minute, count FROM minute_totals WHERE minute >= ?1",
-    )?;
+    let mut stmt = conn.prepare("SELECT minute, count FROM minute_totals WHERE minute >= ?1")?;
     let rows = stmt.query_map(params![start_min], |r| {
         Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?))
     })?;
