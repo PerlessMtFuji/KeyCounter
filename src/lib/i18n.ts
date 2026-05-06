@@ -171,10 +171,12 @@ const en = {
   "widget.today": "Today",
   "widget.modeLabel": "Floating widget style",
   "widget.modeHint":
-    "Full = card with today total. Compact = customizable pill badge. Acrylic = real OS-level blur (Windows 10/11).",
+    "Full = card with today total. Compact = customizable pill badge.",
   "widget.modeFull": "Full",
   "widget.modeCompact": "Compact",
-  "widget.modeAcrylic": "Acrylic",
+  "widget.blurLabel": "Glass blur",
+  "widget.blurHint":
+    "Frosted-glass blur of the wallpaper behind the widget. Windows / macOS only — Linux has no portable blur primitive.",
   "widget.opacityLabel": "Pill opacity",
   "widget.opacityHint":
     "How solid the compact pill looks against your wallpaper.",
@@ -372,10 +374,12 @@ const pl: typeof en = {
   "widget.today": "Dzisiaj",
   "widget.modeLabel": "Styl widżetu",
   "widget.modeHint":
-    "Pełny = karta z dzisiejszym totalem. Kompaktowy = konfigurowalna kapsułka. Acrylic = prawdziwy blur systemowy (Windows 10/11).",
+    "Pełny = karta z dzisiejszym totalem. Kompaktowy = konfigurowalna kapsułka.",
   "widget.modeFull": "Pełny",
   "widget.modeCompact": "Kompaktowy",
-  "widget.modeAcrylic": "Acrylic",
+  "widget.blurLabel": "Szklany blur",
+  "widget.blurHint":
+    "Rozmycie tapety za widżetem w stylu mlecznego szkła. Tylko Windows / macOS — Linux nie ma przenośnego API do blura.",
   "widget.opacityLabel": "Krycie kapsułki",
   "widget.opacityHint":
     "Jak mocno kapsułka odcina się od tapety.",

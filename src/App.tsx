@@ -49,9 +49,12 @@ function useCrossWindowSettingsSync() {
       const v = e.newValue;
       switch (e.key) {
         case "kc-widget-mode":
-          if (v === "full" || v === "compact" || v === "acrylic") {
+          if (v === "full" || v === "compact") {
             useStore.setState({ widgetMode: v });
           }
+          break;
+        case "kc-widget-blur":
+          useStore.setState({ widgetBlur: v === "1" });
           break;
         case "kc-widget-snap":
           useStore.setState({ widgetSnap: v === "1" });
