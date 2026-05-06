@@ -30,6 +30,8 @@ const en = {
   "common.less": "less",
   "common.more": "more",
   "common.totalPresses": "total presses",
+  "common.presses": "presses",
+  "common.keystrokes": "keystrokes",
   "common.noData": "No data yet.",
   "common.notEnough": "Not enough data yet.",
   "common.target": "target",
@@ -129,6 +131,41 @@ const en = {
   "toast.keystrokes": "{n} keystrokes",
   "toast.keepGoing": "Keep going.",
 
+  // Days of the week (short, 3 letters)
+  "day.mon": "Mon",
+  "day.tue": "Tue",
+  "day.wed": "Wed",
+  "day.thu": "Thu",
+  "day.fri": "Fri",
+  "day.sat": "Sat",
+  "day.sun": "Sun",
+
+  // Months (short, 3 letters)
+  "month.jan": "Jan",
+  "month.feb": "Feb",
+  "month.mar": "Mar",
+  "month.apr": "Apr",
+  "month.may": "May",
+  "month.jun": "Jun",
+  "month.jul": "Jul",
+  "month.aug": "Aug",
+  "month.sep": "Sep",
+  "month.oct": "Oct",
+  "month.nov": "Nov",
+  "month.dec": "Dec",
+
+  // Fingers (touch-typing)
+  "finger.lPinky": "L pinky",
+  "finger.lRing": "L ring",
+  "finger.lMiddle": "L middle",
+  "finger.lIndex": "L index",
+  "finger.lThumb": "L thumb",
+  "finger.rThumb": "R thumb",
+  "finger.rIndex": "R index",
+  "finger.rMiddle": "R middle",
+  "finger.rRing": "R ring",
+  "finger.rPinky": "R pinky",
+
   // Widget
   "widget.kpm": "KPM",
   "widget.today": "Today",
@@ -177,6 +214,8 @@ const pl: typeof en = {
   "common.less": "mniej",
   "common.more": "więcej",
   "common.totalPresses": "naciśnięć łącznie",
+  "common.presses": "naciśnięć",
+  "common.keystrokes": "naciśnięć",
   "common.noData": "Brak danych.",
   "common.notEnough": "Za mało danych.",
   "common.target": "cel",
@@ -276,6 +315,41 @@ const pl: typeof en = {
   "toast.milestone": "Osiągnięcie odblokowane",
   "toast.keystrokes": "{n} naciśnięć",
   "toast.keepGoing": "Tak trzymaj.",
+
+  // Days of the week
+  "day.mon": "Pon",
+  "day.tue": "Wt",
+  "day.wed": "Śr",
+  "day.thu": "Czw",
+  "day.fri": "Pt",
+  "day.sat": "Sob",
+  "day.sun": "Nie",
+
+  // Months
+  "month.jan": "Sty",
+  "month.feb": "Lut",
+  "month.mar": "Mar",
+  "month.apr": "Kwi",
+  "month.may": "Maj",
+  "month.jun": "Cze",
+  "month.jul": "Lip",
+  "month.aug": "Sie",
+  "month.sep": "Wrz",
+  "month.oct": "Paź",
+  "month.nov": "Lis",
+  "month.dec": "Gru",
+
+  // Fingers
+  "finger.lPinky": "L mały",
+  "finger.lRing": "L serdeczny",
+  "finger.lMiddle": "L środkowy",
+  "finger.lIndex": "L wskazujący",
+  "finger.lThumb": "L kciuk",
+  "finger.rThumb": "P kciuk",
+  "finger.rIndex": "P wskazujący",
+  "finger.rMiddle": "P środkowy",
+  "finger.rRing": "P serdeczny",
+  "finger.rPinky": "P mały",
 
   // Widget
   "widget.kpm": "KPM",

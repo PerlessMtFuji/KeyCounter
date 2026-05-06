@@ -5,6 +5,7 @@ import { formatNumber } from "@/lib/format";
 import { keyLabel } from "@/lib/keycode";
 import { LAYOUT_OVERRIDES, type LayoutId } from "@/lib/layouts";
 import { useStore } from "@/store/useStore";
+import { useT } from "@/lib/i18n";
 
 interface Props {
   counts: Record<number, number>;
@@ -17,6 +18,8 @@ const KEY_HEIGHT = 44;
 
 export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
   const theme = useStore((s) => s.theme);
+  const t = useT();
+  const presses = t("common.presses");
   const overrides = LAYOUT_OVERRIDES[layout];
   const max = Math.max(1, ...Object.values(counts));
   // Slightly different RGB and alpha curve per theme so saturated keys
@@ -111,10 +114,7 @@ export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
       </div>
 
       {hovered && (
-        <motion.div
-          initial={{ opacity: 0, y: hovered.above ? 4 : -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
+        <div
           className="pointer-events-none fixed z-50 rounded-xl border border-[var(--color-glass-stroke)] bg-[var(--color-bg-elevated)] px-3 py-2 text-xs shadow-2xl backdrop-blur-xl"
           style={{
             left: hovered.x,
@@ -128,9 +128,9 @@ export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
             {hovered.label}
           </div>
           <div className="mt-0.5 tabular-nums text-[var(--color-text-muted)]">
-            {formatNumber(hovered.count)} presses
+            {formatNumber(hovered.count)} {presses}
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   );

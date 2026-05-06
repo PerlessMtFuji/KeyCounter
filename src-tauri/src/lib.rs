@@ -161,14 +161,19 @@ fn open_widget(app: tauri::AppHandle) -> Result<(), String> {
         let _ = w.set_focus();
         return Ok(());
     }
-    WebviewWindowBuilder::new(&app, "widget", WebviewUrl::App("widget.html".into()))
+    // Both windows share the same SPA entry (index.html); the React side
+    // dispatches on `window.label` so we render the floating widget here
+    // instead of the main UI. This avoids a separate widget.html that was
+    // not being served through Tauri's WebviewUrl::App resolution.
+    WebviewWindowBuilder::new(&app, "widget", WebviewUrl::App("index.html".into()))
         .title("KeyCounter widget")
-        .inner_size(220.0, 96.0)
+        .inner_size(240.0, 110.0)
         .resizable(false)
         .decorations(false)
         .transparent(true)
         .always_on_top(true)
         .skip_taskbar(true)
+        .shadow(false)
         .build()
         .map_err(|e| e.to_string())?;
     Ok(())

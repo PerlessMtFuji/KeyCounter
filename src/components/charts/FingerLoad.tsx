@@ -1,13 +1,26 @@
 import { motion } from "framer-motion";
-import { FINGER_NAMES } from "@/lib/fingerMap";
 import { formatNumber } from "@/lib/format";
+import { useT, type TranslationKey } from "@/lib/i18n";
 
 interface Props {
   load: number[]; // length 10
 }
 
-// Tiny SVG hands, schematic. Index 0..9 maps L pinky..R pinky.
+const FINGER_KEYS: TranslationKey[] = [
+  "finger.lPinky",
+  "finger.lRing",
+  "finger.lMiddle",
+  "finger.lIndex",
+  "finger.lThumb",
+  "finger.rThumb",
+  "finger.rIndex",
+  "finger.rMiddle",
+  "finger.rRing",
+  "finger.rPinky",
+];
+
 export function FingerLoad({ load }: Props) {
+  const t = useT();
   const max = Math.max(1, ...load);
   const total = load.reduce((a, b) => a + b, 0) || 1;
 
@@ -48,12 +61,12 @@ export function FingerLoad({ load }: Props) {
         })}
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-3 text-[10px]">
-        {FINGER_NAMES.map((name, i) => (
+        {FINGER_KEYS.map((key, i) => (
           <div
-            key={name}
+            key={key}
             className="flex items-center justify-between text-[var(--color-text-muted)]"
           >
-            <span>{name}</span>
+            <span>{t(key)}</span>
             <span className="tabular-nums">{formatNumber(load[i] ?? 0)}</span>
           </div>
         ))}

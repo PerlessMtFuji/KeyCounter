@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import type { DayTotal } from "@/lib/api";
 import { formatNumber } from "@/lib/format";
+import { useT, type TranslationKey } from "@/lib/i18n";
 
 interface Props {
   // Sparse list — only days with activity. Component fills in zeros.
@@ -9,14 +10,34 @@ interface Props {
   days?: number; // default 365
 }
 
-const MONTH_LABELS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+const MONTH_KEYS: TranslationKey[] = [
+  "month.jan",
+  "month.feb",
+  "month.mar",
+  "month.apr",
+  "month.may",
+  "month.jun",
+  "month.jul",
+  "month.aug",
+  "month.sep",
+  "month.oct",
+  "month.nov",
+  "month.dec",
 ];
 
-const DAY_LABELS = ["", "Mon", "", "Wed", "", "Fri", ""];
+// Week-row labels: render only Mon, Wed, Fri — match GitHub's contribution graph.
+const DAY_ROW_KEYS: (TranslationKey | "")[] = [
+  "",
+  "day.mon",
+  "",
+  "day.wed",
+  "",
+  "day.fri",
+  "",
+];
 
 export function StreakCalendar({ data, days = 365 }: Props) {
+  const t = useT();
   const cells = useMemo(() => {
     const map = new Map<string, number>();
     for (const d of data) map.set(d.day, d.total);
@@ -52,7 +73,7 @@ export function StreakCalendar({ data, days = 365 }: Props) {
       if (!cell) continue;
       const m = cell.date.getMonth();
       if (w === 0 || cells[(w - 1) * 7]?.date.getMonth() !== m) {
-        out.push({ col: w, label: MONTH_LABELS[m]! });
+        out.push({ col: w, label: t(MONTH_KEYS[m]!) });
       }
     }
     return out;
@@ -75,9 +96,9 @@ export function StreakCalendar({ data, days = 365 }: Props) {
       </div>
       <div className="flex gap-[3px] pt-3">
         <div className="flex w-6 flex-col gap-[3px] text-[9px] text-[var(--color-text-muted)]">
-          {DAY_LABELS.map((d, i) => (
+          {DAY_ROW_KEYS.map((k, i) => (
             <span key={i} className="h-[10px] leading-[10px]">
-              {d}
+              {k ? t(k) : ""}
             </span>
           ))}
         </div>
@@ -129,7 +150,7 @@ export function StreakCalendar({ data, days = 365 }: Props) {
             <span className="tabular-nums text-[var(--color-text-primary)]">
               {formatNumber(hover.total)}
             </span>{" "}
-            keystrokes
+            {t("common.keystrokes")}
           </>
         ) : null}
       </div>

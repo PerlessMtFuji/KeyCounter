@@ -1,14 +1,24 @@
 import { motion } from "framer-motion";
+import { useT, type TranslationKey } from "@/lib/i18n";
 
 interface Props {
   // 7 rows (Mon..Sun) × 24 cols (hours)
   data: number[][];
 }
 
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAY_KEYS: TranslationKey[] = [
+  "day.mon",
+  "day.tue",
+  "day.wed",
+  "day.thu",
+  "day.fri",
+  "day.sat",
+  "day.sun",
+];
 
 export function PunchCard({ data }: Props) {
-  // re-order so Mon is index 0; mock generated Sun=0, so rotate
+  const t = useT();
+  // Re-order so Mon is index 0; backend stores Sun=0, so rotate.
   const rotated = [1, 2, 3, 4, 5, 6, 0].map((i) => data[i] ?? []);
   const flat = rotated.flat();
   const max = Math.max(...flat, 1);
@@ -17,8 +27,8 @@ export function PunchCard({ data }: Props) {
     <div className="w-full">
       <div className="flex">
         <div className="flex w-10 flex-col justify-around pr-2 text-right text-[10px] text-[var(--color-text-muted)]">
-          {DAYS.map((d) => (
-            <span key={d}>{d}</span>
+          {DAY_KEYS.map((k) => (
+            <span key={k}>{t(k)}</span>
           ))}
         </div>
         <div className="grid flex-1 grid-cols-[repeat(24,minmax(0,1fr))] gap-[3px]">

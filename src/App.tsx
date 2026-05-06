@@ -9,6 +9,7 @@ import { Stats } from "@/views/Stats";
 import { Achievements } from "@/views/Achievements";
 import { Settings } from "@/views/Settings";
 import { Welcome } from "@/views/Welcome";
+import { Widget } from "@/views/Widget";
 import { useStore, recordPulse } from "@/store/useStore";
 import { api, isTauri } from "@/lib/api";
 
@@ -20,7 +21,63 @@ const VIEWS = {
   settings: Settings,
 } as const;
 
+// Tauri windows share the same index.html. We dispatch on `window.label`
+// at runtime: the main window renders the full app; the floating "widget"
+// window renders its compact view. This avoids multi-page Vite setup
+// entirely (which was failing to serve widget.html through Tauri).
+function getWindowLabel(): string {
+  if (typeof window === "undefined") return "main";
+  const internals = (window as any).__TAURI_INTERNALS__;
+  return internals?.metadata?.currentWindow?.label ?? "main";
+}
+
 function App() {
+  const label = getWindowLabel();
+  if (label === "widget") {
+    return <WidgetShell />;
+  }
+  return <MainShell />;
+}
+
+function WidgetShell() {
+  const init = useStore((s) => s.init);
+  const refreshLive = useStore((s) => s.refreshLive);
+  const refreshAll = useStore((s) => s.refreshAll);
+
+  useEffect(() => {
+    init();
+  }, [init]);
+
+  useEffect(() => {
+    if (!isTauri()) return;
+    let mounted = true;
+    let unlisten: (() => void) | null = null;
+    api.onLivePulse((p) => {
+      if (mounted) recordPulse(p.delta);
+    }).then((u) => {
+      if (mounted) unlisten = u;
+      else u();
+    });
+    return () => {
+      mounted = false;
+      unlisten?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isTauri()) return;
+    const liveTimer = setInterval(refreshLive, 2000);
+    const allTimer = setInterval(refreshAll, 5_000);
+    return () => {
+      clearInterval(liveTimer);
+      clearInterval(allTimer);
+    };
+  }, [refreshLive, refreshAll]);
+
+  return <Widget />;
+}
+
+function MainShell() {
   const view = useStore((s) => s.view);
   const init = useStore((s) => s.init);
   const refreshLive = useStore((s) => s.refreshLive);
@@ -50,9 +107,6 @@ function App() {
 
   useEffect(() => {
     if (!isTauri()) return;
-    // refreshLive syncs the authoritative KPM/last-hour numbers from the DB;
-    // refreshAll re-syncs everything else. Both are backstops — actual UI
-    // numbers tick up on every live-pulse via recordPulse().
     const liveTimer = setInterval(refreshLive, 2000);
     const allTimer = setInterval(refreshAll, 5_000);
     return () => {
@@ -61,8 +115,6 @@ function App() {
     };
   }, [refreshLive, refreshAll]);
 
-  // Block UI behind welcome screen if Accessibility permission is missing
-  // (macOS only — on Win/Linux `permissions.accessibility` is always true).
   if (permissions && !permissions.accessibility) {
     return <Welcome />;
   }
