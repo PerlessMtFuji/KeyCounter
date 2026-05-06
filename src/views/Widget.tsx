@@ -184,25 +184,29 @@ function CompactWidget({
   kpmLabel,
   onClose,
 }: CompactProps) {
-  // True glass via CSS backdrop-filter on a transparent window. Chromium
-  // WebView2 blurs whatever the OS rendered behind the window — desktop,
-  // app windows, anything. We tried OS-level windowEffects first but
-  // they conflict with `transparent: true` on Windows and produced a
-  // flat gray fill instead of the desired blur.
-  // The semi-opaque tint keeps the pill readable even when running on
-  // a backend that doesn't support backdrop-filter (very rare on
-  // modern WebView2 / WebKit / Chromium).
+  // Premium translucent pill. We tried two glass-like routes and hit
+  // hard walls on Tauri/Windows:
+  //   1. OS-level windowEffects (acrylic/mica) + transparent: true →
+  //      WebView2 conflict, fills the window with a solid gray.
+  //   2. CSS backdrop-filter: blur(...) → Chromium only blurs in-page
+  //      content, never the desktop pixels behind a transparent webview.
+  // True OS acrylic only works with a rectangular window (no pill
+  // shape), so we keep the pill and lean into a gradient + inner
+  // highlights so the surface still reads as a glassy object instead
+  // of a flat tag. No outer shadow — that was bleeding into the
+  // transparent corners and showing as a visible rectangle.
   return (
     <div
       data-tauri-drag-region
       className="group relative flex h-full w-full select-none items-center gap-1.5 rounded-full border border-[var(--color-glass-stroke)] py-1 pr-2 pl-2"
       style={{
         background:
-          "color-mix(in srgb, var(--color-bg-elevated) 42%, transparent)",
-        backdropFilter: "blur(24px) saturate(150%)",
-        WebkitBackdropFilter: "blur(24px) saturate(150%)",
+          "linear-gradient(135deg, " +
+          "color-mix(in srgb, var(--color-bg-elevated) 62%, transparent), " +
+          "color-mix(in srgb, var(--color-bg-elevated) 46%, transparent))",
         boxShadow:
-          "0 12px 32px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(255, 255, 255, 0.05) inset",
+          "inset 0 1px 0 rgba(255, 255, 255, 0.10), " +
+          "inset 0 -1px 0 rgba(0, 0, 0, 0.18)",
       }}
     >
       <span
