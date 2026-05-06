@@ -171,9 +171,17 @@ const en = {
   "widget.today": "Today",
   "widget.modeLabel": "Floating widget style",
   "widget.modeHint":
-    "Compact = pill-shaped KPM badge. Full = larger card with today total + buttons.",
+    "Full = card with today total. Compact = customizable pill badge. Acrylic = real OS-level blur (Windows 10/11).",
   "widget.modeFull": "Full",
   "widget.modeCompact": "Compact",
+  "widget.modeAcrylic": "Acrylic",
+  "widget.opacityLabel": "Pill opacity",
+  "widget.opacityHint":
+    "How solid the compact pill looks against your wallpaper.",
+  "widget.tintLabel": "Pill tint",
+  "widget.tintHint":
+    "Pick a custom background colour, or reset to follow the active theme.",
+  "widget.tintReset": "Reset",
   "widget.snapLabel": "Anchor to taskbar",
   "widget.snapHint":
     "Auto-position the widget above the bottom-right corner of the screen each time it opens — looks pinned to the taskbar.",
@@ -364,9 +372,17 @@ const pl: typeof en = {
   "widget.today": "Dzisiaj",
   "widget.modeLabel": "Styl widżetu",
   "widget.modeHint":
-    "Kompaktowy = mała kapsułka z KPM. Pełny = większa karta z dzisiejszym totalem i przyciskami.",
+    "Pełny = karta z dzisiejszym totalem. Kompaktowy = konfigurowalna kapsułka. Acrylic = prawdziwy blur systemowy (Windows 10/11).",
   "widget.modeFull": "Pełny",
   "widget.modeCompact": "Kompaktowy",
+  "widget.modeAcrylic": "Acrylic",
+  "widget.opacityLabel": "Krycie kapsułki",
+  "widget.opacityHint":
+    "Jak mocno kapsułka odcina się od tapety.",
+  "widget.tintLabel": "Kolor kapsułki",
+  "widget.tintHint":
+    "Wybierz własny kolor tła lub zresetuj, by podążał za motywem.",
+  "widget.tintReset": "Reset",
   "widget.snapLabel": "Przyklej do paska zadań",
   "widget.snapHint":
     "Po każdym pokazaniu widget pozycjonuje się przy prawej krawędzi nad paskiem zadań — wygląda jakby był jego częścią.",

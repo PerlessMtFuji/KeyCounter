@@ -58,6 +58,10 @@ export function Settings() {
   const setWidgetMode = useStore((s) => s.setWidgetMode);
   const widgetSnap = useStore((s) => s.widgetSnap);
   const setWidgetSnap = useStore((s) => s.setWidgetSnap);
+  const widgetOpacity = useStore((s) => s.widgetOpacity);
+  const setWidgetOpacity = useStore((s) => s.setWidgetOpacity);
+  const widgetTint = useStore((s) => s.widgetTint);
+  const setWidgetTint = useStore((s) => s.setWidgetTint);
   const refreshAll = useStore((s) => s.refreshAll);
   const [autostart, setAutostart] = useState(false);
   const [dbPath, setDbPath] = useState<string>("");
@@ -231,7 +235,7 @@ export function Settings() {
               </div>
             </div>
             <div className="flex shrink-0 rounded-lg border border-[var(--color-glass-stroke)] bg-white/[0.02] p-0.5 text-xs">
-              {(["full", "compact"] as const).map((m) => (
+              {(["full", "compact", "acrylic"] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setWidgetMode(m)}
@@ -243,11 +247,66 @@ export function Settings() {
                 >
                   {m === "full"
                     ? t("widget.modeFull")
-                    : t("widget.modeCompact")}
+                    : m === "compact"
+                      ? t("widget.modeCompact")
+                      : t("widget.modeAcrylic")}
                 </button>
               ))}
             </div>
           </div>
+          {widgetMode === "compact" && (
+            <>
+              <div className="flex items-center justify-between py-3">
+                <div className="min-w-0 pr-3">
+                  <div className="text-sm">{t("widget.opacityLabel")}</div>
+                  <div className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">
+                    {t("widget.opacityHint")}
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <input
+                    type="range"
+                    min={10}
+                    max={100}
+                    step={5}
+                    value={widgetOpacity}
+                    onChange={(e) => setWidgetOpacity(Number(e.target.value))}
+                    className="h-1 w-32 cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-[var(--color-accent)]"
+                  />
+                  <span className="w-9 text-right text-xs tabular-nums text-[var(--color-text-muted)]">
+                    {widgetOpacity}%
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between py-3">
+                <div className="min-w-0 pr-3">
+                  <div className="text-sm">{t("widget.tintLabel")}</div>
+                  <div className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">
+                    {t("widget.tintHint")}
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <input
+                    type="color"
+                    value={
+                      /^#[0-9a-fA-F]{6}$/.test(widgetTint)
+                        ? widgetTint
+                        : "#1a1a22"
+                    }
+                    onChange={(e) => setWidgetTint(e.target.value)}
+                    className="h-7 w-10 cursor-pointer rounded-md border border-[var(--color-glass-stroke)] bg-transparent p-0.5"
+                  />
+                  <button
+                    onClick={() => setWidgetTint("")}
+                    disabled={widgetTint === ""}
+                    className="rounded-md border border-[var(--color-glass-stroke)] bg-white/[0.03] px-2.5 py-1 text-[11px] text-[var(--color-text-muted)] transition hover:bg-white/[0.06] disabled:opacity-40"
+                  >
+                    {t("widget.tintReset")}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
           <Toggle
             label={t("widget.snapLabel")}
             hint={t("widget.snapHint")}

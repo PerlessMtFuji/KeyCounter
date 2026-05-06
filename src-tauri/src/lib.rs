@@ -14,6 +14,7 @@ use tauri::{
     image::Image,
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::TrayIconBuilder,
+    utils::{config::WindowEffectsConfig, WindowEffect, WindowEffectState},
     Emitter, LogicalPosition, Manager, State,
 };
 
@@ -213,6 +214,32 @@ fn snap_widget_to_taskbar(app: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+/// Toggle the OS-level acrylic blur on the widget window.
+///
+/// We can't change `transparent` at runtime, but we *can* attach or detach
+/// `WindowEffect::Acrylic` whenever the user switches widget styles. The
+/// pill / full modes pass `mode = ""` to clear effects; the rectangular
+/// "acrylic" mode passes `mode = "acrylic"` to enable real OS blur.
+#[tauri::command]
+fn set_widget_effects(mode: String, app: tauri::AppHandle) -> Result<(), String> {
+    let widget = app
+        .get_webview_window("widget")
+        .ok_or_else(|| "widget window not found".to_string())?;
+
+    let cfg: Option<WindowEffectsConfig> = if mode == "acrylic" {
+        Some(WindowEffectsConfig {
+            effects: vec![WindowEffect::Acrylic],
+            state: Some(WindowEffectState::Active),
+            radius: None,
+            color: None,
+        })
+    } else {
+        None
+    };
+
+    widget.set_effects(cfg).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 fn show_main(app: tauri::AppHandle) -> Result<(), String> {
     if let Some(w) = app.get_webview_window("main") {
@@ -389,6 +416,7 @@ pub fn run() {
             open_widget,
             show_main,
             snap_widget_to_taskbar,
+            set_widget_effects,
         ])
         .run(tauri::generate_context!())
         .expect("error while running KeyCounter");

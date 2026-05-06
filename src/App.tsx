@@ -49,12 +49,24 @@ function useCrossWindowSettingsSync() {
       const v = e.newValue;
       switch (e.key) {
         case "kc-widget-mode":
-          if (v === "full" || v === "compact") {
+          if (v === "full" || v === "compact" || v === "acrylic") {
             useStore.setState({ widgetMode: v });
           }
           break;
         case "kc-widget-snap":
           useStore.setState({ widgetSnap: v === "1" });
+          break;
+        case "kc-widget-opacity": {
+          const n = Number(v);
+          if (Number.isFinite(n)) {
+            useStore.setState({
+              widgetOpacity: Math.max(10, Math.min(100, Math.round(n))),
+            });
+          }
+          break;
+        }
+        case "kc-widget-tint":
+          useStore.setState({ widgetTint: v });
           break;
         case "kc-theme":
           if (v === "dark" || v === "light") {

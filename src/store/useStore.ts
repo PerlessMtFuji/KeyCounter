@@ -15,7 +15,10 @@ import type { LayoutId } from "@/lib/layouts";
 import type { Lang } from "@/lib/i18n";
 
 type Theme = "dark" | "light";
-type WidgetMode = "full" | "compact";
+type WidgetMode = "full" | "compact" | "acrylic";
+
+export const DEFAULT_WIDGET_OPACITY = 60;
+export const DEFAULT_WIDGET_TINT = "";
 
 function readLocalStorage<T extends string>(
   key: string,
@@ -94,6 +97,10 @@ interface AppState {
   setWidgetMode: (m: WidgetMode) => void;
   widgetSnap: boolean;
   setWidgetSnap: (v: boolean) => void;
+  widgetOpacity: number;
+  setWidgetOpacity: (n: number) => void;
+  widgetTint: string;
+  setWidgetTint: (c: string) => void;
 
   // Visible error notifications (for failures we'd otherwise only see in
   // a devtools console — useful when running a packaged build).
@@ -321,7 +328,7 @@ export const useStore = create<AppState>((set, get) => ({
   widgetMode: readLocalStorage<WidgetMode>(
     "kc-widget-mode",
     "full",
-    ["full", "compact"],
+    ["full", "compact", "acrylic"],
   ),
   setWidgetMode: (m) => {
     if (typeof localStorage !== "undefined") {
@@ -338,6 +345,31 @@ export const useStore = create<AppState>((set, get) => ({
       localStorage.setItem("kc-widget-snap", v ? "1" : "0");
     }
     set({ widgetSnap: v });
+  },
+  widgetOpacity: (() => {
+    if (typeof localStorage === "undefined") return DEFAULT_WIDGET_OPACITY;
+    const raw = localStorage.getItem("kc-widget-opacity");
+    if (raw === null) return DEFAULT_WIDGET_OPACITY;
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return DEFAULT_WIDGET_OPACITY;
+    return Math.max(10, Math.min(100, Math.round(n)));
+  })(),
+  setWidgetOpacity: (n) => {
+    const clamped = Math.max(10, Math.min(100, Math.round(n)));
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("kc-widget-opacity", String(clamped));
+    }
+    set({ widgetOpacity: clamped });
+  },
+  widgetTint: (() => {
+    if (typeof localStorage === "undefined") return DEFAULT_WIDGET_TINT;
+    return localStorage.getItem("kc-widget-tint") ?? DEFAULT_WIDGET_TINT;
+  })(),
+  setWidgetTint: (c) => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("kc-widget-tint", c);
+    }
+    set({ widgetTint: c });
   },
 
   errors: [],
