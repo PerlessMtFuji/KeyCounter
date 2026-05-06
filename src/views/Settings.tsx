@@ -54,6 +54,8 @@ export function Settings() {
   const setTheme = useStore((s) => s.setTheme);
   const lang = useStore((s) => s.lang);
   const setLang = useStore((s) => s.setLang);
+  const widgetMode = useStore((s) => s.widgetMode);
+  const setWidgetMode = useStore((s) => s.setWidgetMode);
   const refreshAll = useStore((s) => s.refreshAll);
   const [autostart, setAutostart] = useState(false);
   const [dbPath, setDbPath] = useState<string>("");
@@ -218,6 +220,31 @@ export function Settings() {
                 </option>
               ))}
             </select>
+          </div>
+          <div className="flex items-center justify-between py-3">
+            <div className="min-w-0 pr-3">
+              <div className="text-sm">{t("widget.modeLabel")}</div>
+              <div className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">
+                {t("widget.modeHint")}
+              </div>
+            </div>
+            <div className="flex shrink-0 rounded-lg border border-[var(--color-glass-stroke)] bg-white/[0.02] p-0.5 text-xs">
+              {(["full", "compact"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setWidgetMode(m)}
+                  className={`rounded-md px-3 py-1.5 transition ${
+                    widgetMode === m
+                      ? "bg-[var(--color-accent-soft)] text-[var(--color-text-primary)]"
+                      : "text-[var(--color-text-muted)]"
+                  }`}
+                >
+                  {m === "full"
+                    ? t("widget.modeFull")
+                    : t("widget.modeCompact")}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </GlassCard>

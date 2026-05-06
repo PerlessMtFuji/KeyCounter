@@ -15,6 +15,7 @@ import type { LayoutId } from "@/lib/layouts";
 import type { Lang } from "@/lib/i18n";
 
 type Theme = "dark" | "light";
+type WidgetMode = "full" | "compact";
 
 function readLocalStorage<T extends string>(
   key: string,
@@ -89,6 +90,8 @@ interface AppState {
   setTheme: (t: Theme) => void;
   lang: Lang;
   setLang: (l: Lang) => void;
+  widgetMode: WidgetMode;
+  setWidgetMode: (m: WidgetMode) => void;
 
   // Visible error notifications (for failures we'd otherwise only see in
   // a devtools console — useful when running a packaged build).
@@ -312,6 +315,17 @@ export const useStore = create<AppState>((set, get) => ({
       localStorage.setItem("kc-lang", l);
     }
     set({ lang: l });
+  },
+  widgetMode: readLocalStorage<WidgetMode>(
+    "kc-widget-mode",
+    "full",
+    ["full", "compact"],
+  ),
+  setWidgetMode: (m) => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("kc-widget-mode", m);
+    }
+    set({ widgetMode: m });
   },
 
   errors: [],

@@ -169,6 +169,11 @@ const en = {
   // Widget
   "widget.kpm": "KPM",
   "widget.today": "Today",
+  "widget.modeLabel": "Floating widget style",
+  "widget.modeHint":
+    "Compact = pill-shaped KPM badge. Full = larger card with today total + buttons.",
+  "widget.modeFull": "Full",
+  "widget.modeCompact": "Compact",
 
   // Welcome (macOS Accessibility)
   "welcome.tag": "One-time setup",
@@ -354,6 +359,11 @@ const pl: typeof en = {
   // Widget
   "widget.kpm": "KPM",
   "widget.today": "Dzisiaj",
+  "widget.modeLabel": "Styl widżetu",
+  "widget.modeHint":
+    "Kompaktowy = mała kapsułka z KPM. Pełny = większa karta z dzisiejszym totalem i przyciskami.",
+  "widget.modeFull": "Pełny",
+  "widget.modeCompact": "Kompaktowy",
 
   // Welcome (macOS Accessibility)
   "welcome.tag": "Jednorazowa konfiguracja",
