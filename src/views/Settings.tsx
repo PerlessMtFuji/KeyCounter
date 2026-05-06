@@ -56,6 +56,8 @@ export function Settings() {
   const setLang = useStore((s) => s.setLang);
   const widgetMode = useStore((s) => s.widgetMode);
   const setWidgetMode = useStore((s) => s.setWidgetMode);
+  const widgetBlur = useStore((s) => s.widgetBlur);
+  const setWidgetBlur = useStore((s) => s.setWidgetBlur);
   const widgetSnap = useStore((s) => s.widgetSnap);
   const setWidgetSnap = useStore((s) => s.setWidgetSnap);
   const widgetOpacity = useStore((s) => s.widgetOpacity);
@@ -235,7 +237,7 @@ export function Settings() {
               </div>
             </div>
             <div className="flex shrink-0 rounded-lg border border-[var(--color-glass-stroke)] bg-white/[0.02] p-0.5 text-xs">
-              {(["full", "compact", "acrylic"] as const).map((m) => (
+              {(["full", "compact"] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setWidgetMode(m)}
@@ -247,13 +249,17 @@ export function Settings() {
                 >
                   {m === "full"
                     ? t("widget.modeFull")
-                    : m === "compact"
-                      ? t("widget.modeCompact")
-                      : t("widget.modeAcrylic")}
+                    : t("widget.modeCompact")}
                 </button>
               ))}
             </div>
           </div>
+          <Toggle
+            label={t("widget.blurLabel")}
+            hint={t("widget.blurHint")}
+            value={widgetBlur}
+            onChange={setWidgetBlur}
+          />
           {widgetMode === "compact" && (
             <>
               <div className="flex items-center justify-between py-3">

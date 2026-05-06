@@ -15,7 +15,7 @@ import type { LayoutId } from "@/lib/layouts";
 import type { Lang } from "@/lib/i18n";
 
 type Theme = "dark" | "light";
-type WidgetMode = "full" | "compact" | "acrylic";
+type WidgetMode = "full" | "compact";
 
 export const DEFAULT_WIDGET_OPACITY = 60;
 export const DEFAULT_WIDGET_TINT = "";
@@ -95,6 +95,8 @@ interface AppState {
   setLang: (l: Lang) => void;
   widgetMode: WidgetMode;
   setWidgetMode: (m: WidgetMode) => void;
+  widgetBlur: boolean;
+  setWidgetBlur: (v: boolean) => void;
   widgetSnap: boolean;
   setWidgetSnap: (v: boolean) => void;
   widgetOpacity: number;
@@ -325,16 +327,33 @@ export const useStore = create<AppState>((set, get) => ({
     }
     set({ lang: l });
   },
-  widgetMode: readLocalStorage<WidgetMode>(
-    "kc-widget-mode",
-    "full",
-    ["full", "compact", "acrylic"],
-  ),
+  widgetMode: (() => {
+    if (typeof localStorage === "undefined") return "full" as WidgetMode;
+    const raw = localStorage.getItem("kc-widget-mode");
+    // Migrate the old "acrylic" mode (removed): map to full layout +
+    // turn the new glass blur skin on so the user keeps an equivalent look.
+    if (raw === "acrylic") {
+      localStorage.setItem("kc-widget-mode", "full");
+      localStorage.setItem("kc-widget-blur", "1");
+      return "full" as WidgetMode;
+    }
+    return raw === "compact" || raw === "full" ? raw : "full";
+  })(),
   setWidgetMode: (m) => {
     if (typeof localStorage !== "undefined") {
       localStorage.setItem("kc-widget-mode", m);
     }
     set({ widgetMode: m });
+  },
+  widgetBlur: (() => {
+    if (typeof localStorage === "undefined") return false;
+    return localStorage.getItem("kc-widget-blur") === "1";
+  })(),
+  setWidgetBlur: (v) => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("kc-widget-blur", v ? "1" : "0");
+    }
+    set({ widgetBlur: v });
   },
   widgetSnap: (() => {
     if (typeof localStorage === "undefined") return false;

@@ -10,7 +10,6 @@ import { useT } from "@/lib/i18n";
 
 const SIZE_FULL: [number, number] = [240, 110];
 const SIZE_COMPACT: [number, number] = [168, 36];
-const SIZE_ACRYLIC: [number, number] = [260, 96];
 
 // Standalone window: minimal always-on-top KPM/today display.
 // Each Tauri window has its own JS context, so we re-hydrate the store
@@ -22,6 +21,7 @@ export function Widget() {
   const todayTotal = useStore((s) => s.today?.total ?? 0);
   const paused = useStore((s) => s.paused);
   const widgetMode = useStore((s) => s.widgetMode);
+  const widgetBlur = useStore((s) => s.widgetBlur);
   const widgetSnap = useStore((s) => s.widgetSnap);
   const widgetOpacity = useStore((s) => s.widgetOpacity);
   const widgetTint = useStore((s) => s.widgetTint);
@@ -65,23 +65,17 @@ export function Widget() {
     return () => clearInterval(i);
   }, []);
 
-  // Resize the window + toggle real OS acrylic depending on the chosen
-  // mode. Synced from the same store entry that the Settings UI writes
-  // to, so changing the mode in the main app instantly reshapes the
-  // floating widget. After resize, re-snap to the taskbar corner if
-  // snap is enabled (the new size would otherwise leave the widget
-  // anchored at its old top-left).
+  // Resize the window + toggle the focus-independent OS blur. Synced from
+  // the same store entries the Settings UI writes to, so toggles in the
+  // main app instantly reshape the floating widget. After resize, re-snap
+  // to the taskbar corner if snap is enabled (the new size would otherwise
+  // leave the widget anchored at its old top-left).
   useEffect(() => {
     if (!isTauri()) return;
-    const [w, h] =
-      widgetMode === "compact"
-        ? SIZE_COMPACT
-        : widgetMode === "acrylic"
-          ? SIZE_ACRYLIC
-          : SIZE_FULL;
-    invoke("set_widget_effects", {
-      mode: widgetMode === "acrylic" ? "acrylic" : "",
-    }).catch((e) => console.error("set_widget_effects failed:", e));
+    const [w, h] = widgetMode === "compact" ? SIZE_COMPACT : SIZE_FULL;
+    invoke("set_widget_blur", { enabled: widgetBlur }).catch((e) =>
+      console.error("set_widget_blur failed:", e),
+    );
     getCurrentWindow()
       .setSize(new LogicalSize(w, h))
       .then(() => {
@@ -90,7 +84,7 @@ export function Widget() {
         }
       })
       .catch((e) => console.error("widget setSize/snap failed:", e));
-  }, [widgetMode]);
+  }, [widgetMode, widgetBlur]);
 
   // Snap-to-taskbar lifecycle: re-position whenever snap is freshly
   // enabled, when the window becomes visible (open from sidebar/tray),
@@ -152,24 +146,6 @@ export function Widget() {
     }
   }
 
-  if (widgetMode === "acrylic") {
-    return (
-      <AcrylicWidget
-        liveKpm={liveKpm}
-        pulseTick={pulseTick}
-        todayTotal={todayTotal}
-        paused={paused}
-        labels={{
-          kpm: t("widget.kpm"),
-          today: t("widget.today"),
-        }}
-        onTogglePause={togglePause}
-        onOpenMain={openMain}
-        onClose={closeWidget}
-      />
-    );
-  }
-
   if (widgetMode === "compact") {
     return (
       <CompactWidget
@@ -188,6 +164,7 @@ export function Widget() {
 
   return (
     <FullWidget
+      glassy={widgetBlur}
       liveKpm={liveKpm}
       pulseTick={pulseTick}
       todayTotal={todayTotal}
@@ -226,17 +203,11 @@ function CompactWidget({
   onOpenMain,
   onClose,
 }: CompactProps) {
-  // Premium translucent pill. We tried two glass-like routes and hit
-  // hard walls on Tauri/Windows:
-  //   1. OS-level windowEffects (acrylic/mica) + transparent: true →
-  //      WebView2 conflict, fills the window with a solid gray.
-  //   2. CSS backdrop-filter: blur(...) → Chromium only blurs in-page
-  //      content, never the desktop pixels behind a transparent webview.
-  // True OS acrylic only works with a rectangular window (no pill
-  // shape) — that's the third widget mode. For the pill we lean into
-  // a gradient + inner highlights so the surface still reads as a
-  // glassy object. The user can dial transparency and tint to match
-  // their wallpaper.
+  // Translucent pill — gradient + inner highlights read as a glassy
+  // object even without any OS effect underneath. With the new "Glass
+  // blur" toggle on, ACCENT_ENABLE_BLURBEHIND on the HWND adds a real
+  // wallpaper blur behind the pill, and the user-controlled opacity
+  // dials in how much of it shows through.
   const bg = useMemo(() => buildPillBackground(opacity, tint), [opacity, tint]);
   return (
     <div
@@ -368,6 +339,7 @@ function buildPillBackground(opacity: number, tint: string): string {
 }
 
 interface FullProps {
+  glassy: boolean;
   liveKpm: number;
   pulseTick: number;
   todayTotal: number;
@@ -379,6 +351,7 @@ interface FullProps {
 }
 
 function FullWidget({
+  glassy,
   liveKpm,
   pulseTick,
   todayTotal,
@@ -388,48 +361,16 @@ function FullWidget({
   onOpenMain,
   onClose,
 }: FullProps) {
+  // When glassy, drop the opaque gradient so the OS blur (applied to the
+  // HWND via window-vibrancy::apply_blur) shows through; a faint inner
+  // wash + highlight keeps the card readable over busy wallpapers.
+  const skin = glassy
+    ? "bg-white/[0.06] backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-1px_0_rgba(0,0,0,0.18)]"
+    : "bg-fallback noise";
   return (
     <div
       data-tauri-drag-region
-      className="bg-fallback noise relative flex h-full w-full select-none flex-col overflow-hidden rounded-2xl border border-[var(--color-glass-stroke)] p-3"
-    >
-      <WidgetHeader
-        pulseTick={pulseTick}
-        paused={paused}
-        onTogglePause={onTogglePause}
-        onOpenMain={onOpenMain}
-        onClose={onClose}
-      />
-      <WidgetBody
-        liveKpm={liveKpm}
-        todayTotal={todayTotal}
-        labels={labels}
-      />
-    </div>
-  );
-}
-
-function AcrylicWidget({
-  liveKpm,
-  pulseTick,
-  todayTotal,
-  paused,
-  labels,
-  onTogglePause,
-  onOpenMain,
-  onClose,
-}: FullProps) {
-  // Rectangular acrylic mode. The window stays `transparent: true`, but
-  // we attach `WindowEffect::Acrylic` at runtime via the `set_widget_effects`
-  // command. WebView2 happily lets the OS blur shine through as long as
-  // we don't fight it with our own background fill — so the body here
-  // has no background, no border, no border-radius. The acrylic hides
-  // any half-transparent rounding artifacts.
-  return (
-    <div
-      data-tauri-drag-region
-      className="relative flex h-full w-full select-none flex-col p-3"
-      style={{ background: "transparent" }}
+      className={`relative flex h-full w-full select-none flex-col overflow-hidden rounded-2xl border border-[var(--color-glass-stroke)] p-3 ${skin}`}
     >
       <WidgetHeader
         pulseTick={pulseTick}
