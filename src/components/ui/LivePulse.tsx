@@ -11,7 +11,7 @@ export function LivePulse() {
   const t = useT();
 
   return (
-    <div className="flex items-center gap-3 rounded-full border border-white/[0.06] bg-white/[0.03] py-1.5 pr-4 pl-2 backdrop-blur-xl">
+    <div className="flex items-center gap-3 rounded-full border border-[var(--color-glass-stroke)] bg-[var(--color-glass-fill)] py-1.5 pr-4 pl-2">
       <span className="relative flex h-7 w-7 items-center justify-center">
         <AnimatePresence>
           <motion.span

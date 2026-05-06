@@ -471,11 +471,21 @@ export const useStore = create<AppState>((set, get) => ({
   },
 }));
 
-// Called from a global event listener in App on every backend live-pulse.
-// Optimistically bumps the totals so Dashboard cards tick up in real time
-// without waiting for the next backend poll.
+// Called from a global event listener in App on every backend live-pulse
+// (~5 Hz while typing). Throttles the visible "ripple" pulseTick to ~3 Hz
+// so framer-motion doesn't stack 5 concurrent ripple animations per
+// second, and keeps the live KPM history accurate. Heavier counters
+// (today/range/lifetime) are NOT bumped optimistically anymore — every
+// keystroke firing a setState that re-renders every Dashboard card was
+// the dominant CPU cost. The 5 s backend poll catches them up.
+const PULSE_TICK_MIN_INTERVAL_MS = 300;
+let lastPulseTickAt = 0;
+
 export function recordPulse(delta: number) {
   const now = Date.now();
+  const advanceTick = now - lastPulseTickAt >= PULSE_TICK_MIN_INTERVAL_MS;
+  if (advanceTick) lastPulseTickAt = now;
+
   useStore.setState((s) => {
     const history = [
       ...s.pulseHistory.filter((p) => now - p.ts < 60_000),
@@ -483,20 +493,10 @@ export function recordPulse(delta: number) {
     ];
     const liveKpm = history.reduce((a, b) => a + b.delta, 0);
     return {
-      pulseTick: s.pulseTick + 1,
+      pulseTick: advanceTick ? s.pulseTick + 1 : s.pulseTick,
       lastPulseDelta: delta,
       pulseHistory: history,
       liveKpm,
-      lifetime: s.lifetime + delta,
-      today: s.today
-        ? { ...s.today, total: s.today.total + delta }
-        : s.today,
-      range7: s.range7
-        ? { ...s.range7, total: s.range7.total + delta }
-        : s.range7,
-      range30: s.range30
-        ? { ...s.range30, total: s.range30.total + delta }
-        : s.range30,
     };
   });
 }

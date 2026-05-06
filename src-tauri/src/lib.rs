@@ -300,6 +300,11 @@ pub fn run() {
                     let mut last: i64 = 0;
                     let mut idle_ticks: u32 = 0;
                     let mut pulse_phase: u32 = 0;
+                    // Cache the last frame ID we pushed to the tray so we
+                    // skip the redundant set_icon calls during long idle
+                    // stretches and on every other typing tick (where the
+                    // frame doesn't actually change).
+                    let mut last_frame_id: u8 = 255;
                     loop {
                         thread::sleep(Duration::from_millis(200));
                         let now = live_counter.load(Ordering::Relaxed);
@@ -315,16 +320,26 @@ pub fn run() {
 
                         // Tray icon: alternate between two pulse frames while
                         // typing, snap to the dim "idle" frame after ~1 second
-                        // of inactivity.
-                        if let Some(tray) = app_handle.tray_by_id("kc-tray") {
-                            let frame = if idle_ticks > 5 {
-                                &idle
-                            } else if pulse_phase % 2 == 0 {
-                                &pulse_a
-                            } else {
-                                &pulse_b
-                            };
-                            let _ = tray.set_icon(Some(frame.clone()));
+                        // of inactivity. Only call set_icon when the frame
+                        // actually changes — Windows tray repaints on every
+                        // call and showed up in profiling as continuous CPU.
+                        let frame_id: u8 = if idle_ticks > 5 {
+                            0
+                        } else if pulse_phase % 2 == 0 {
+                            1
+                        } else {
+                            2
+                        };
+                        if frame_id != last_frame_id {
+                            if let Some(tray) = app_handle.tray_by_id("kc-tray") {
+                                let frame = match frame_id {
+                                    0 => &idle,
+                                    1 => &pulse_a,
+                                    _ => &pulse_b,
+                                };
+                                let _ = tray.set_icon(Some(frame.clone()));
+                                last_frame_id = frame_id;
+                            }
                         }
                     }
                 })

@@ -15,7 +15,7 @@ export function ErrorToast() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.96 }}
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
-            className="pointer-events-auto flex max-w-md items-start gap-3 rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-xs shadow-2xl backdrop-blur-xl"
+            className="pointer-events-auto flex max-w-md items-start gap-3 rounded-xl border border-rose-400/30 bg-[#28121a]/95 px-4 py-3 text-xs shadow-2xl"
           >
             <svg
               viewBox="0 0 24 24"

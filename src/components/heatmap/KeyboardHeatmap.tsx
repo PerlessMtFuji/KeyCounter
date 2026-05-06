@@ -162,7 +162,7 @@ function Tooltip({ count, label, x, y, above, pressesLabel }: TooltipProps) {
 
   return (
     <div
-      className="pointer-events-none fixed z-50 rounded-xl border border-[var(--color-glass-stroke)] bg-[var(--color-bg-elevated)] px-3 py-2 text-xs shadow-2xl backdrop-blur-xl"
+      className="pointer-events-none fixed z-50 rounded-xl border border-[var(--color-glass-stroke)] bg-[var(--color-bg-elevated)] px-3 py-2 text-xs shadow-2xl"
       style={{
         left: clampedX - halfW,
         top: clampedTop,
