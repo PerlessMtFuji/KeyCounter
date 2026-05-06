@@ -125,6 +125,9 @@ const en = {
   "settings.license": "License",
   "settings.privacy": "Privacy",
   "settings.privacyValue": "counts only · no network",
+  "settings.perfHudLabel": "Performance HUD",
+  "settings.perfHudHint":
+    "Top-right overlay with live CPU / GPU / RAM / FPS. Toggle anywhere with Ctrl+Shift+P. GPU is Windows-only.",
 
   // Milestone toast
   "toast.milestone": "Milestone unlocked",
@@ -325,6 +328,9 @@ const pl: typeof en = {
   "settings.license": "Licencja",
   "settings.privacy": "Prywatność",
   "settings.privacyValue": "tylko liczniki · bez sieci",
+  "settings.perfHudLabel": "Panel wydajności",
+  "settings.perfHudHint":
+    "Nakładka w prawym górnym rogu z live CPU / GPU / RAM / FPS. Przełącz skrótem Ctrl+Shift+P. GPU mierzymy tylko na Windowsie.",
 
   // Milestone toast
   "toast.milestone": "Osiągnięcie odblokowane",

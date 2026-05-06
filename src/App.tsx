@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { LivePulse } from "@/components/ui/LivePulse";
 import { MilestoneToast } from "@/components/ui/MilestoneToast";
 import { ErrorToast } from "@/components/ui/ErrorToast";
+import { PerfHud } from "@/components/ui/PerfHud";
 import { Dashboard } from "@/views/Dashboard";
 import { Heatmap } from "@/views/Heatmap";
 import { Stats } from "@/views/Stats";
@@ -134,13 +135,32 @@ function WidgetShell() {
   return <Widget />;
 }
 
+// Global hotkey: toggle the performance HUD with Ctrl+Shift+P. Lives at
+// the App level so the shortcut is active everywhere — Settings has the
+// equivalent toggle for users who don't reach for keyboard shortcuts.
+function usePerfHudShortcut() {
+  const setPerfHud = useStore((s) => s.setPerfHud);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === "P" || e.key === "p")) {
+        e.preventDefault();
+        setPerfHud(!useStore.getState().perfHud);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [setPerfHud]);
+}
+
 function MainShell() {
   const view = useStore((s) => s.view);
   const init = useStore((s) => s.init);
   const refreshLive = useStore((s) => s.refreshLive);
   const refreshAll = useStore((s) => s.refreshAll);
   const permissions = useStore((s) => s.permissions);
+  const perfHud = useStore((s) => s.perfHud);
   const View = VIEWS[view];
+  usePerfHudShortcut();
 
   useEffect(() => {
     init();
@@ -197,6 +217,7 @@ function MainShell() {
       </main>
       <MilestoneToast />
       <ErrorToast />
+      {perfHud && <PerfHud />}
     </div>
   );
 }

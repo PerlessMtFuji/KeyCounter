@@ -58,6 +58,8 @@ export function Settings() {
   const setWidgetMode = useStore((s) => s.setWidgetMode);
   const widgetSnap = useStore((s) => s.widgetSnap);
   const setWidgetSnap = useStore((s) => s.setWidgetSnap);
+  const perfHud = useStore((s) => s.perfHud);
+  const setPerfHud = useStore((s) => s.setPerfHud);
   const widgetOpacity = useStore((s) => s.widgetOpacity);
   const setWidgetOpacity = useStore((s) => s.setWidgetOpacity);
   const widgetTint = useStore((s) => s.widgetTint);
@@ -310,6 +312,12 @@ export function Settings() {
             hint={t("widget.snapHint")}
             value={widgetSnap}
             onChange={setWidgetSnap}
+          />
+          <Toggle
+            label={t("settings.perfHudLabel")}
+            hint={t("settings.perfHudHint")}
+            value={perfHud}
+            onChange={setPerfHud}
           />
         </div>
       </GlassCard>
