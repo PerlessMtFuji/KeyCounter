@@ -90,74 +90,22 @@ function useCrossWindowSettingsSync() {
 function App() {
   useCrossWindowSettingsSync();
   const label = getWindowLabel();
-  // The widget window is the only one that stays `transparent: true`
-  // (its compact pill needs the surrounding rectangle to disappear). A
-  // class on <html> lets index.css override the otherwise-solid body bg
-  // for that window only.
-  useEffect(() => {
-    if (typeof document !== "undefined") {
-      document.documentElement.classList.toggle(
-        "widget-window",
-        label === "widget",
-      );
-    }
-  }, [label]);
   if (label === "widget") {
     return <WidgetShell />;
   }
   return <MainShell />;
 }
 
+// The widget runs in its own webview. Previously the shell here pulled
+// in the full store init() (permissions check, lifetime totals, top
+// keys, hourly buckets, punch card, calendar, heatmap keys, range
+// stats) and then polled refreshAll on a 5-second timer — an order of
+// magnitude more queries + IPC + setState than the widget actually
+// renders. The inner <Widget /> already runs its own minimal refresh
+// (paused + today total only, every 5s, paused while hidden) and
+// subscribes to live-pulse with a hidden-document guard. So the shell
+// doesn't need to do anything but render.
 function WidgetShell() {
-  const init = useStore((s) => s.init);
-  const refreshLive = useStore((s) => s.refreshLive);
-  const refreshAll = useStore((s) => s.refreshAll);
-
-  useEffect(() => {
-    init();
-  }, [init]);
-
-  // The widget shell deliberately doesn't subscribe to live-pulse — the
-  // inner <Widget /> does, with a `document.hidden` guard. Two
-  // subscriptions in the same JS context would call recordPulse twice
-  // per emit and double-count the live KPM.
-
-  // Refresh timers paused while the widget is hidden — backend already
-  // skips emits when no window is visible, but these polled commands
-  // would still fire data fetches the user can't see.
-  useEffect(() => {
-    if (!isTauri()) return;
-    let liveTimer: ReturnType<typeof setInterval> | undefined;
-    let allTimer: ReturnType<typeof setInterval> | undefined;
-
-    function start() {
-      stop();
-      liveTimer = setInterval(refreshLive, 2000);
-      allTimer = setInterval(refreshAll, 5_000);
-    }
-    function stop() {
-      if (liveTimer) clearInterval(liveTimer);
-      if (allTimer) clearInterval(allTimer);
-      liveTimer = undefined;
-      allTimer = undefined;
-    }
-    function onVisibility() {
-      if (document.hidden) stop();
-      else {
-        refreshLive().catch(() => {});
-        refreshAll().catch(() => {});
-        start();
-      }
-    }
-
-    if (!document.hidden) start();
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibility);
-      stop();
-    };
-  }, [refreshLive, refreshAll]);
-
   return <Widget />;
 }
 

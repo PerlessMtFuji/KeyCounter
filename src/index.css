@@ -46,18 +46,13 @@ body {
     system-ui, sans-serif;
   font-feature-settings: "ss01", "cv11";
   color: var(--color-text-primary);
-  /* Solid base; the main window is no longer transparent (Mica/Acrylic
-     dropped for GPU savings). The widget window keeps `transparent: true`
-     so its compact pill renders as an actual pill instead of a rectangle —
-     for that case App.tsx adds the `widget-window` class on <html>. */
+  /* Solid base. Both main and widget windows are now non-transparent
+     (Mica/Acrylic and the widget DWM compositing pass were the largest
+     remaining GPU costs). The compact widget pill now renders inside a
+     small opaque rectangle instead of "floating" — accepted tradeoff. */
   background: var(--color-bg-base);
   -webkit-font-smoothing: antialiased;
   user-select: none;
-}
-
-html.widget-window,
-html.widget-window body {
-  background: transparent;
 }
 
 /* Fallback gradient when system blur (Mica/Vibrancy) isn't available. */

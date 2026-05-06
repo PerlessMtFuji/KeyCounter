@@ -300,21 +300,28 @@ pub fn run() {
                     let mut last: i64 = 0;
                     let mut idle_ticks: u32 = 0;
                     let mut pulse_phase: u32 = 0;
-                    // Cache the last frame ID we pushed to the tray so we
-                    // skip the redundant set_icon calls during long idle
-                    // stretches.
                     let mut last_frame_id: u8 = 255;
-                    // 500 ms tick (was 200 ms). At 5 Hz the live KPM number
-                    // updated faster than a human reads — 2 Hz is plenty
-                    // for "this number is live" feedback and halves the
-                    // IPC + React work tied to each emit.
-                    const TICK: Duration = Duration::from_millis(500);
-                    // After 1 s of no activity the tray snaps to idle.
-                    // Threshold scaled to the new tick rate (was 5 ticks at
-                    // 200 ms = 1 s; now 2 ticks at 500 ms = 1 s).
+                    // Active tick: 500 ms. The live KPM only needs ~2 Hz to
+                    // feel "live"; halves the IPC + React work tied to
+                    // each emit vs. the original 200 ms.
+                    const TICK_ACTIVE: Duration = Duration::from_millis(500);
+                    // Idle tick: once we've been idle long enough that the
+                    // tray icon snapped to "idle" and there's nothing to
+                    // emit anyway, drop to 2 s wakeups. Cuts the wake-up
+                    // rate by 4× during long not-typing stretches.
+                    const TICK_IDLE: Duration = Duration::from_millis(2_000);
+                    // ~1 s without typing before we consider the user idle.
                     const IDLE_THRESHOLD: u32 = 2;
+                    // Once the tray has snapped to idle and stayed there,
+                    // we can switch to the slower wakeup cadence.
+                    const DEEP_IDLE_THRESHOLD: u32 = 4;
                     loop {
-                        thread::sleep(TICK);
+                        let sleep = if idle_ticks > DEEP_IDLE_THRESHOLD {
+                            TICK_IDLE
+                        } else {
+                            TICK_ACTIVE
+                        };
+                        thread::sleep(sleep);
                         let now = live_counter.load(Ordering::Relaxed);
                         let delta = now - last;
 
