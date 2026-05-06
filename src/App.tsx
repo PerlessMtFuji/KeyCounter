@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { LivePulse } from "@/components/ui/LivePulse";
 import { MilestoneToast } from "@/components/ui/MilestoneToast";
@@ -185,17 +184,15 @@ function MainShell() {
           <LivePulse />
         </div>
         <div className="mx-auto -mt-2 max-w-6xl px-8 pb-10">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={view}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <View />
-            </motion.div>
-          </AnimatePresence>
+          {/* No AnimatePresence wrapper here on purpose. Each view brings
+              its own per-element enter animations (h1, GlassCard, etc.),
+              and the Heatmap mounts ~70 motion.div keys with staggered
+              delays + a layoutId pill. With mode="wait" + layoutId in
+              the unmounting subtree, framer-motion sporadically failed
+              to finish the exit animation and left the old view ghost-
+              mounted under the new one — visible as an empty tab whose
+              keyboard heatmap was still tooltip-interactive. */}
+          <View key={view} />
         </div>
       </main>
       <MilestoneToast />

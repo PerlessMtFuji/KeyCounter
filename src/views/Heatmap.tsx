@@ -78,26 +78,22 @@ export function Heatmap() {
             ))}
           </select>
           <div className="glass flex rounded-xl p-1 text-xs">
-            {RANGES.map((r) => (
-              <button
-                key={r.id}
-                onClick={() => setHeatmapRange(r.id)}
-                className={`relative rounded-lg px-3 py-1.5 transition ${
-                  heatmapRange === r.id
-                    ? "text-[var(--color-text-primary)]"
-                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
-                }`}
-              >
-                {heatmapRange === r.id && (
-                  <motion.div
-                    layoutId="range-active"
-                    className="absolute inset-0 rounded-lg bg-[var(--color-accent-soft)]"
-                    transition={{ type: "spring", stiffness: 500, damping: 40 }}
-                  />
-                )}
-                <span className="relative">{t(r.key)}</span>
-              </button>
-            ))}
+            {RANGES.map((r) => {
+              const active = heatmapRange === r.id;
+              return (
+                <button
+                  key={r.id}
+                  onClick={() => setHeatmapRange(r.id)}
+                  className={`relative rounded-lg px-3 py-1.5 transition ${
+                    active
+                      ? "bg-[var(--color-accent-soft)] text-[var(--color-text-primary)]"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+                  }`}
+                >
+                  <span className="relative">{t(r.key)}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
