@@ -112,7 +112,10 @@ export function PerfHud() {
   return (
     <div className="pointer-events-none fixed top-4 right-4 z-[60] w-72 rounded-xl border border-white/10 bg-black/80 p-3 font-mono text-[10px] leading-tight text-zinc-300 shadow-2xl">
       <div className="mb-2 flex items-center justify-between text-[9px] tracking-[0.18em] text-zinc-400 uppercase">
-        <span>Perf · Ctrl+Shift+P</span>
+        <span>
+          Perf · {latest?.process_count ?? "?"}{" "}
+          <span className="text-zinc-500">proc</span>
+        </span>
         {!inTauri && <span className="text-amber-300">browser</span>}
       </div>
 

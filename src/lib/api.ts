@@ -63,6 +63,7 @@ export interface PerfSample {
   gpu_3d: number | null;
   gpu_compute: number | null;
   gpu_copy: number | null;
+  process_count: number;
   uptime_s: number;
 }
 

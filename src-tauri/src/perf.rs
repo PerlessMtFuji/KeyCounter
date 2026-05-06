@@ -1,15 +1,20 @@
 //! Built-in performance sampler.
 //!
-//! Emits a `perf-sample` Tauri event once per second with the running
-//! process's CPU%, RSS, and (on Windows) per-engine GPU utilization.
-//! The frontend HUD subscribes to this and renders a top-right overlay
-//! when toggled with Ctrl+Shift+P.
+//! Emits a `perf-sample` Tauri event once per second with own-process
+//! CPU%, RSS, and (on Windows) per-engine GPU utilization — aggregated
+//! over our entire process tree. Tauri 2 on Windows runs the UI inside
+//! WebView2, which spawns `msedgewebview2.exe` child processes for the
+//! browser host, renderer, GPU, and utility roles. Almost all of the
+//! CPU/GPU cost lives in those children, not in the Rust process —
+//! sampling the root PID alone gave us numbers an order of magnitude
+//! lower than reality (System Informer / Task Manager aggregate the
+//! tree).
 //!
 //! GPU on Windows is read via PDH counter `\GPU Engine(*)\Utilization
-//! Percentage` filtered by our own PID — same source Task Manager
-//! itself uses, so the numbers match what users see there. Other OSes
-//! return None for GPU; we only ship to Windows for now.
+//! Percentage`, then filtered by the tree's PID set. Other OSes return
+//! None for GPU.
 
+use std::collections::HashSet;
 use std::time::{Duration, Instant};
 
 use serde::Serialize;
@@ -24,6 +29,7 @@ pub struct PerfSample {
     pub gpu_3d: Option<f32>,
     pub gpu_compute: Option<f32>,
     pub gpu_copy: Option<f32>,
+    pub process_count: u32,
     pub uptime_s: u64,
 }
 
@@ -35,20 +41,19 @@ pub fn spawn(app: AppHandle) {
         .expect("failed to spawn perf thread");
 }
 
-fn run_loop(app: AppHandle, pid_u32: u32) {
-    let pid = Pid::from_u32(pid_u32);
+fn run_loop(app: AppHandle, root_pid_u32: u32) {
+    let root_pid = Pid::from_u32(root_pid_u32);
     let mut sys = System::new();
     let started = Instant::now();
-
-    // sysinfo's CPU% is delta-based: the first refresh records a baseline,
-    // the second yields a real number. Warm it up before the loop so the
-    // first emitted sample isn't always 0.
     let refresh_kind = ProcessRefreshKind::new().with_cpu().with_memory();
-    sys.refresh_processes_specifics(ProcessesToUpdate::Some(&[pid]), true, refresh_kind);
+
+    // Warm up. sysinfo CPU% is delta-based, so the very first refresh is a
+    // baseline only — without this the first emitted sample is always 0%.
+    sys.refresh_processes_specifics(ProcessesToUpdate::All, true, refresh_kind);
     std::thread::sleep(Duration::from_millis(200));
 
     #[cfg(target_os = "windows")]
-    let mut gpu_query = match windows_gpu::GpuQuery::new(pid_u32) {
+    let mut gpu_query = match windows_gpu::GpuQuery::new() {
         Ok(q) => Some(q),
         Err(e) => {
             log::warn!("perf: GPU query unavailable: {e}");
@@ -57,16 +62,30 @@ fn run_loop(app: AppHandle, pid_u32: u32) {
     };
 
     loop {
-        sys.refresh_processes_specifics(ProcessesToUpdate::Some(&[pid]), true, refresh_kind);
-        let (cpu_pct, rss_mb) = sys
-            .process(pid)
-            .map(|p| (p.cpu_usage(), p.memory() / 1024 / 1024))
-            .unwrap_or((0.0, 0));
+        sys.refresh_processes_specifics(ProcessesToUpdate::All, true, refresh_kind);
+        let tree = descendant_pids(&sys, root_pid);
+
+        let mut cpu_pct = 0.0f32;
+        let mut rss_mb = 0u64;
+        for pid in &tree {
+            if let Some(p) = sys.process(*pid) {
+                cpu_pct += p.cpu_usage();
+                rss_mb += p.memory() / 1024 / 1024;
+            }
+        }
+
+        let pid_u32_set: HashSet<u32> = tree.iter().map(|p| p.as_u32()).collect();
 
         #[cfg(target_os = "windows")]
-        let gpu = gpu_query.as_mut().map(|q| q.sample()).unwrap_or_default();
+        let gpu = gpu_query
+            .as_mut()
+            .map(|q| q.sample(&pid_u32_set))
+            .unwrap_or_default();
         #[cfg(not(target_os = "windows"))]
-        let gpu = windows_gpu::GpuStats::default();
+        let gpu = {
+            let _ = &pid_u32_set;
+            windows_gpu::GpuStats::default()
+        };
 
         let _ = app.emit(
             "perf-sample",
@@ -77,12 +96,36 @@ fn run_loop(app: AppHandle, pid_u32: u32) {
                 gpu_3d: gpu.three_d,
                 gpu_compute: gpu.compute,
                 gpu_copy: gpu.copy,
+                process_count: tree.len() as u32,
                 uptime_s: started.elapsed().as_secs(),
             },
         );
 
         std::thread::sleep(Duration::from_secs(1));
     }
+}
+
+/// BFS the parent-PID graph starting at `root` and return every PID that
+/// transitively descends from it (including `root` itself). Stops growing
+/// once an iteration adds no new entries.
+fn descendant_pids(sys: &System, root: Pid) -> HashSet<Pid> {
+    let mut all: HashSet<Pid> = HashSet::new();
+    all.insert(root);
+    loop {
+        let mut grew = false;
+        for (pid, proc) in sys.processes() {
+            if let Some(parent) = proc.parent() {
+                if all.contains(&parent) && !all.contains(pid) {
+                    all.insert(*pid);
+                    grew = true;
+                }
+            }
+        }
+        if !grew {
+            break;
+        }
+    }
+    all
 }
 
 #[cfg(not(target_os = "windows"))]
@@ -98,7 +141,7 @@ mod windows_gpu {
 
 #[cfg(target_os = "windows")]
 mod windows_gpu {
-    use std::collections::HashMap;
+    use std::collections::{HashMap, HashSet};
     use std::ffi::OsStr;
     use std::os::windows::ffi::OsStrExt;
 
@@ -122,12 +165,11 @@ mod windows_gpu {
     pub struct GpuQuery {
         hquery: isize,
         hcounter: isize,
-        pid_prefix: String,
         primed: bool,
     }
 
     impl GpuQuery {
-        pub fn new(pid: u32) -> Result<Self, String> {
+        pub fn new() -> Result<Self, String> {
             unsafe {
                 let mut hquery: isize = 0;
                 let r = PdhOpenQueryW(std::ptr::null(), 0, &mut hquery);
@@ -144,21 +186,19 @@ mod windows_gpu {
                 Ok(Self {
                     hquery,
                     hcounter,
-                    pid_prefix: format!("pid_{pid}_"),
                     primed: false,
                 })
             }
         }
 
-        pub fn sample(&mut self) -> GpuStats {
+        pub fn sample(&mut self, pids: &HashSet<u32>) -> GpuStats {
             unsafe {
                 if PdhCollectQueryData(self.hquery) as u32 != ERROR_SUCCESS {
                     return GpuStats::default();
                 }
-                // Utilization counters need two collects to compute the
-                // rate. The first sample after construction is a
-                // baseline only — return zeros until the second tick.
                 if !self.primed {
+                    // PDH utilization counters need two collects to compute
+                    // the rate. Skip the very first read.
                     self.primed = true;
                     return GpuStats::default();
                 }
@@ -195,17 +235,17 @@ mod windows_gpu {
                     item_count as usize,
                 );
 
-                // Sum utilizations across all engine instances of the
-                // same engine type for our PID. Then engtype-specific
-                // breakdown + a "headline" total = max engtype, which
-                // is what Windows Task Manager shows.
                 let mut by_engtype: HashMap<String, f64> = HashMap::new();
                 for item in items {
                     if item.FmtValue.CStatus != PDH_CSTATUS_VALID_DATA {
                         continue;
                     }
                     let name = wide_to_string(item.szName);
-                    if !name.starts_with(&self.pid_prefix) {
+                    let pid = match extract_pid(&name) {
+                        Some(p) => p,
+                        None => continue,
+                    };
+                    if !pids.contains(&pid) {
                         continue;
                     }
                     let val = item.FmtValue.Anonymous.doubleValue;
@@ -243,10 +283,8 @@ mod windows_gpu {
         }
     }
 
-    // Safety: the underlying handles are owned and not shared across
-    // threads. The query lives on the kc-perf thread for the lifetime
-    // of the process. Sync isn't needed but the App emit path doesn't
-    // touch it anyway.
+    // Safety: handles are owned and only ever touched from the kc-perf
+    // thread. Sync isn't required.
     unsafe impl Send for GpuQuery {}
 
     fn wide(s: &str) -> Vec<u16> {
@@ -268,5 +306,13 @@ mod windows_gpu {
             let slice = std::slice::from_raw_parts(p, len);
             String::from_utf16_lossy(slice)
         }
+    }
+
+    /// Parse the PID out of an instance name like
+    /// `pid_12345_luid_0_1_phys_0_eng_2_engtype_3D`.
+    fn extract_pid(instance: &str) -> Option<u32> {
+        let rest = instance.strip_prefix("pid_")?;
+        let end = rest.find('_')?;
+        rest[..end].parse().ok()
     }
 }
