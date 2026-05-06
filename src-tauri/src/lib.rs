@@ -14,7 +14,7 @@ use tauri::{
     image::Image,
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::TrayIconBuilder,
-    Emitter, Manager, State,
+    Emitter, LogicalPosition, Manager, State,
 };
 
 const TRAY_IDLE: &[u8] = include_bytes!("../icons/tray-idle.png");
@@ -164,6 +164,52 @@ fn open_widget(app: tauri::AppHandle) -> Result<(), String> {
         .ok_or_else(|| "widget window not found".to_string())?;
     w.show().map_err(|e| e.to_string())?;
     w.set_focus().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn snap_widget_to_taskbar(app: tauri::AppHandle) -> Result<(), String> {
+    let widget = app
+        .get_webview_window("widget")
+        .ok_or_else(|| "widget window not found".to_string())?;
+
+    // Use the monitor that currently contains the widget (or primary as
+    // fallback). If we can't get a monitor we fail silently — better than
+    // moving the widget off-screen.
+    let monitor = widget
+        .current_monitor()
+        .map_err(|e| e.to_string())?
+        .or_else(|| app.primary_monitor().ok().flatten())
+        .ok_or_else(|| "no monitor available".to_string())?;
+
+    let scale = monitor.scale_factor();
+    let m_size = monitor.size();
+    let m_pos = monitor.position();
+    let widget_size = widget.outer_size().map_err(|e| e.to_string())?;
+
+    // Convert physical coords to logical (DPI-aware). LogicalPosition::set
+    // takes f64, lets the OS handle DPI scaling.
+    let screen_w = m_size.width as f64 / scale;
+    let screen_h = m_size.height as f64 / scale;
+    let screen_x = m_pos.x as f64 / scale;
+    let screen_y = m_pos.y as f64 / scale;
+    let ww = widget_size.width as f64 / scale;
+    let wh = widget_size.height as f64 / scale;
+
+    // Place above the typical Windows 11 taskbar with a small gap.
+    // 48 px is the Win 11 default; users with custom taskbars will see
+    // the widget hover slightly higher / lower but still in the
+    // bottom-right corner area.
+    let taskbar_h: f64 = 48.0;
+    let margin_x: f64 = 8.0;
+    let margin_y: f64 = 8.0;
+
+    let x = screen_x + screen_w - ww - margin_x;
+    let y = screen_y + screen_h - wh - taskbar_h - margin_y;
+
+    widget
+        .set_position(LogicalPosition::new(x, y))
+        .map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -342,6 +388,7 @@ pub fn run() {
             export_data,
             open_widget,
             show_main,
+            snap_widget_to_taskbar,
         ])
         .run(tauri::generate_context!())
         .expect("error while running KeyCounter");

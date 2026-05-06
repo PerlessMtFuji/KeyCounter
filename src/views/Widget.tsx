@@ -21,6 +21,7 @@ export function Widget() {
   const todayTotal = useStore((s) => s.today?.total ?? 0);
   const paused = useStore((s) => s.paused);
   const widgetMode = useStore((s) => s.widgetMode);
+  const widgetSnap = useStore((s) => s.widgetSnap);
   const t = useT();
 
   // Subscribe to live-pulse events (broadcast by backend to all windows)
@@ -63,14 +64,47 @@ export function Widget() {
 
   // Resize the window to match the selected mode. Synced from the same
   // store entry that the Settings UI writes to, so changing the mode in
-  // the main app instantly reshapes the floating widget.
+  // the main app instantly reshapes the floating widget. After resize,
+  // re-snap to the taskbar corner if snap is enabled (the new size
+  // would otherwise leave the widget anchored at its old top-left).
   useEffect(() => {
     if (!isTauri()) return;
     const [w, h] = widgetMode === "compact" ? SIZE_COMPACT : SIZE_FULL;
     getCurrentWindow()
       .setSize(new LogicalSize(w, h))
-      .catch((e) => console.error("widget setSize failed:", e));
+      .then(() => {
+        if (useStore.getState().widgetSnap) {
+          return invoke("snap_widget_to_taskbar");
+        }
+      })
+      .catch((e) => console.error("widget setSize/snap failed:", e));
   }, [widgetMode]);
+
+  // Snap-to-taskbar lifecycle: re-position whenever snap is freshly
+  // enabled, when the window becomes visible (open from sidebar/tray),
+  // and on mount.
+  useEffect(() => {
+    if (!isTauri() || !widgetSnap) return;
+    invoke("snap_widget_to_taskbar").catch((e) =>
+      console.error("snap failed:", e),
+    );
+  }, [widgetSnap]);
+
+  useEffect(() => {
+    if (!isTauri()) return;
+    const onVisChange = () => {
+      if (
+        document.visibilityState === "visible" &&
+        useStore.getState().widgetSnap
+      ) {
+        invoke("snap_widget_to_taskbar").catch((e) =>
+          console.error("snap failed:", e),
+        );
+      }
+    };
+    document.addEventListener("visibilitychange", onVisChange);
+    return () => document.removeEventListener("visibilitychange", onVisChange);
+  }, []);
 
   async function togglePause() {
     const next = !paused;

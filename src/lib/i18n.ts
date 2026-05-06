@@ -174,6 +174,9 @@ const en = {
     "Compact = pill-shaped KPM badge. Full = larger card with today total + buttons.",
   "widget.modeFull": "Full",
   "widget.modeCompact": "Compact",
+  "widget.snapLabel": "Anchor to taskbar",
+  "widget.snapHint":
+    "Auto-position the widget above the bottom-right corner of the screen each time it opens — looks pinned to the taskbar.",
 
   // Welcome (macOS Accessibility)
   "welcome.tag": "One-time setup",
@@ -364,6 +367,9 @@ const pl: typeof en = {
     "Kompaktowy = mała kapsułka z KPM. Pełny = większa karta z dzisiejszym totalem i przyciskami.",
   "widget.modeFull": "Pełny",
   "widget.modeCompact": "Kompaktowy",
+  "widget.snapLabel": "Przyklej do paska zadań",
+  "widget.snapHint":
+    "Po każdym pokazaniu widget pozycjonuje się przy prawej krawędzi nad paskiem zadań — wygląda jakby był jego częścią.",
 
   // Welcome (macOS Accessibility)
   "welcome.tag": "Jednorazowa konfiguracja",

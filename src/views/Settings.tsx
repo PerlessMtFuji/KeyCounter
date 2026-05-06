@@ -56,6 +56,8 @@ export function Settings() {
   const setLang = useStore((s) => s.setLang);
   const widgetMode = useStore((s) => s.widgetMode);
   const setWidgetMode = useStore((s) => s.setWidgetMode);
+  const widgetSnap = useStore((s) => s.widgetSnap);
+  const setWidgetSnap = useStore((s) => s.setWidgetSnap);
   const refreshAll = useStore((s) => s.refreshAll);
   const [autostart, setAutostart] = useState(false);
   const [dbPath, setDbPath] = useState<string>("");
@@ -246,6 +248,12 @@ export function Settings() {
               ))}
             </div>
           </div>
+          <Toggle
+            label={t("widget.snapLabel")}
+            hint={t("widget.snapHint")}
+            value={widgetSnap}
+            onChange={setWidgetSnap}
+          />
         </div>
       </GlassCard>
 

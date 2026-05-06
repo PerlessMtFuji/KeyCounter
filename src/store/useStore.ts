@@ -92,6 +92,8 @@ interface AppState {
   setLang: (l: Lang) => void;
   widgetMode: WidgetMode;
   setWidgetMode: (m: WidgetMode) => void;
+  widgetSnap: boolean;
+  setWidgetSnap: (v: boolean) => void;
 
   // Visible error notifications (for failures we'd otherwise only see in
   // a devtools console — useful when running a packaged build).
@@ -326,6 +328,16 @@ export const useStore = create<AppState>((set, get) => ({
       localStorage.setItem("kc-widget-mode", m);
     }
     set({ widgetMode: m });
+  },
+  widgetSnap: (() => {
+    if (typeof localStorage === "undefined") return false;
+    return localStorage.getItem("kc-widget-snap") === "1";
+  })(),
+  setWidgetSnap: (v) => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("kc-widget-snap", v ? "1" : "0");
+    }
+    set({ widgetSnap: v });
   },
 
   errors: [],

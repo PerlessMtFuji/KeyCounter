@@ -53,6 +53,9 @@ function useCrossWindowSettingsSync() {
             useStore.setState({ widgetMode: v });
           }
           break;
+        case "kc-widget-snap":
+          useStore.setState({ widgetSnap: v === "1" });
+          break;
         case "kc-theme":
           if (v === "dark" || v === "light") {
             useStore.getState().setTheme(v);
