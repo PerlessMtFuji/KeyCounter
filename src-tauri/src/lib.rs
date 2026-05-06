@@ -290,6 +290,26 @@ pub fn run() {
                 })
                 .expect("failed to spawn emit thread");
 
+            // Hide-on-close for both windows. Without this, clicking the
+            // OS close button on the main window destroys it; subsequent
+            // "Show KeyCounter" from the tray finds no window and is a
+            // silent no-op. With this, windows go to the tray on close
+            // and re-show reliably. Quit happens via the tray "Quit"
+            // item which calls app.exit() and bypasses window events.
+            for label in ["main", "widget"] {
+                if let Some(w) = app.get_webview_window(label) {
+                    let w_clone = w.clone();
+                    w.on_window_event(move |event| {
+                        if let tauri::WindowEvent::CloseRequested { api, .. } =
+                            event
+                        {
+                            api.prevent_close();
+                            let _ = w_clone.hide();
+                        }
+                    });
+                }
+            }
+
             app.manage(app_state);
             log::info!("KeyCounter started; db at {}", db_path.display());
             Ok(())
