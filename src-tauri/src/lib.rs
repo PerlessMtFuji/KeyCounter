@@ -14,7 +14,7 @@ use tauri::{
     image::Image,
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::TrayIconBuilder,
-    Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder,
+    Emitter, Manager, State,
 };
 
 const TRAY_IDLE: &[u8] = include_bytes!("../icons/tray-idle.png");
@@ -156,26 +156,14 @@ fn export_data(state: State<'_, AppState>) -> Result<serde_json::Value, String> 
 
 #[tauri::command]
 fn open_widget(app: tauri::AppHandle) -> Result<(), String> {
-    if let Some(w) = app.get_webview_window("widget") {
-        let _ = w.show();
-        let _ = w.set_focus();
-        return Ok(());
-    }
-    // Both windows share the same SPA entry (index.html); the React side
-    // dispatches on `window.label` so we render the floating widget here
-    // instead of the main UI. This avoids a separate widget.html that was
-    // not being served through Tauri's WebviewUrl::App resolution.
-    WebviewWindowBuilder::new(&app, "widget", WebviewUrl::App("index.html".into()))
-        .title("KeyCounter widget")
-        .inner_size(240.0, 110.0)
-        .resizable(false)
-        .decorations(false)
-        .transparent(true)
-        .always_on_top(true)
-        .skip_taskbar(true)
-        .shadow(false)
-        .build()
-        .map_err(|e| e.to_string())?;
+    // The widget window is declared in tauri.conf.json with visible: false,
+    // so it's already created and validated at startup. We just toggle
+    // visibility — far more reliable than building a window dynamically.
+    let w = app
+        .get_webview_window("widget")
+        .ok_or_else(|| "widget window not found".to_string())?;
+    w.show().map_err(|e| e.to_string())?;
+    w.set_focus().map_err(|e| e.to_string())?;
     Ok(())
 }
 

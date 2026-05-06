@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { LivePulse } from "@/components/ui/LivePulse";
 import { MilestoneToast } from "@/components/ui/MilestoneToast";
+import { ErrorToast } from "@/components/ui/ErrorToast";
 import { Dashboard } from "@/views/Dashboard";
 import { Heatmap } from "@/views/Heatmap";
 import { Stats } from "@/views/Stats";
@@ -141,6 +142,7 @@ function MainShell() {
         </div>
       </main>
       <MilestoneToast />
+      <ErrorToast />
     </div>
   );
 }

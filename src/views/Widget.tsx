@@ -81,7 +81,11 @@ export function Widget() {
   async function closeWidget() {
     if (!isTauri()) return;
     try {
-      await getCurrentWindow().close();
+      // Hide instead of close — the window is declared in tauri.conf.json
+      // with `visible: false` and we just toggle visibility from then on.
+      // Closing would destroy it; the next open_widget call would have
+      // nothing to re-show.
+      await getCurrentWindow().hide();
     } catch (e) {
       console.error(e);
     }

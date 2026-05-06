@@ -90,6 +90,12 @@ interface AppState {
   lang: Lang;
   setLang: (l: Lang) => void;
 
+  // Visible error notifications (for failures we'd otherwise only see in
+  // a devtools console — useful when running a packaged build).
+  errors: { id: number; title: string; detail?: string }[];
+  pushError: (title: string, detail?: string) => void;
+  dismissError: (id: number) => void;
+
   // Demo / mock-only mode (true when not running inside Tauri)
   demo: boolean;
 
@@ -307,6 +313,17 @@ export const useStore = create<AppState>((set, get) => ({
     }
     set({ lang: l });
   },
+
+  errors: [],
+  pushError: (title, detail) =>
+    set((s) => ({
+      errors: [
+        ...s.errors,
+        { id: Date.now() + Math.random(), title, detail },
+      ],
+    })),
+  dismissError: (id) =>
+    set((s) => ({ errors: s.errors.filter((e) => e.id !== id) })),
 
   demo: !isTauri(),
 

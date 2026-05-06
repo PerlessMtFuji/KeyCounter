@@ -26,6 +26,20 @@
           "effects": ["mica", "acrylic", "sidebar", "fullScreenUI"],
           "state": "active"
         }
+      },
+      {
+        "label": "widget",
+        "title": "KeyCounter widget",
+        "url": "index.html",
+        "width": 240,
+        "height": 110,
+        "decorations": false,
+        "transparent": true,
+        "resizable": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "shadow": false,
+        "visible": false
       }
     ],
     "security": {

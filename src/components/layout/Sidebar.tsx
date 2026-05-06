@@ -20,7 +20,20 @@ const ITEMS: Item[] = [
 
 export function Sidebar() {
   const { view, setView, paused, togglePaused } = useStore();
+  const pushError = useStore((s) => s.pushError);
   const t = useT();
+
+  async function openWidget() {
+    if (!isTauri()) return;
+    try {
+      await invoke("open_widget");
+    } catch (e) {
+      pushError(
+        "Could not open the floating widget",
+        e instanceof Error ? e.message : String(e),
+      );
+    }
+  }
 
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-[var(--color-glass-stroke)] bg-white/[0.015] p-5">
@@ -75,7 +88,7 @@ export function Sidebar() {
 
       <div className="mt-auto space-y-2">
         <button
-          onClick={() => isTauri() && invoke("open_widget").catch(console.error)}
+          onClick={openWidget}
           disabled={!isTauri()}
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-glass-stroke)] bg-white/[0.02] px-3 py-2 text-[11px] font-medium text-[var(--color-text-muted)] transition hover:bg-white/[0.05] hover:text-[var(--color-text-primary)] disabled:opacity-40"
         >

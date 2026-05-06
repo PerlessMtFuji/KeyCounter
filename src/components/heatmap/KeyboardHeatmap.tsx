@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { KEYBOARD_60 } from "./keyboard-layout";
 import { formatNumber } from "@/lib/format";
 import { keyLabel } from "@/lib/keycode";
@@ -113,25 +114,67 @@ export function KeyboardHeatmap({ counts, layout = "qwerty" }: Props) {
         ))}
       </div>
 
-      {hovered && (
-        <div
-          className="pointer-events-none fixed z-50 rounded-xl border border-[var(--color-glass-stroke)] bg-[var(--color-bg-elevated)] px-3 py-2 text-xs shadow-2xl backdrop-blur-xl"
-          style={{
-            left: hovered.x,
-            top: hovered.y + (hovered.above ? -10 : 10),
-            transform: hovered.above
-              ? "translate(-50%, -100%)"
-              : "translate(-50%, 0)",
-          }}
-        >
-          <div className="font-semibold text-[var(--color-text-primary)]">
-            {hovered.label}
-          </div>
-          <div className="mt-0.5 tabular-nums text-[var(--color-text-muted)]">
-            {formatNumber(hovered.count)} {presses}
-          </div>
-        </div>
-      )}
+      {hovered &&
+        typeof document !== "undefined" &&
+        createPortal(
+          // Portal to document.body so the tooltip is NOT positioned
+          // relative to the GlassCard ancestor (whose framer-motion
+          // transform makes `position: fixed` resolve relative to the
+          // card and the `overflow: hidden` then clips it). x/y are
+          // additionally clamped to keep the tooltip fully inside the
+          // viewport even when hovering edge keys.
+          <Tooltip {...hovered} pressesLabel={presses} />,
+          document.body,
+        )}
+    </div>
+  );
+}
+
+interface TooltipProps {
+  code: number;
+  count: number;
+  label: string;
+  x: number;
+  y: number;
+  above: boolean;
+  pressesLabel: string;
+}
+
+const TOOLTIP_W = 180;
+const TOOLTIP_H = 52;
+const PAD = 8;
+
+function Tooltip({ count, label, x, y, above, pressesLabel }: TooltipProps) {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  // Horizontal: center on cursor, but clamp so the tooltip's full width
+  // fits inside the viewport.
+  const halfW = TOOLTIP_W / 2;
+  const clampedX = Math.max(halfW + PAD, Math.min(vw - halfW - PAD, x));
+
+  // Vertical: place above key by default, flip below when there's no
+  // room above. Apply the gap directly to top so we can avoid CSS
+  // transform on the Y axis (no transform conflicts of any kind).
+  const flippedAbove = above && y - TOOLTIP_H - PAD - 10 >= 0;
+  const top = flippedAbove ? y - TOOLTIP_H - 10 : y + 10;
+  const clampedTop = Math.max(PAD, Math.min(vh - TOOLTIP_H - PAD, top));
+
+  return (
+    <div
+      className="pointer-events-none fixed z-50 rounded-xl border border-[var(--color-glass-stroke)] bg-[var(--color-bg-elevated)] px-3 py-2 text-xs shadow-2xl backdrop-blur-xl"
+      style={{
+        left: clampedX - halfW,
+        top: clampedTop,
+        width: TOOLTIP_W,
+      }}
+    >
+      <div className="font-semibold text-[var(--color-text-primary)]">
+        {label}
+      </div>
+      <div className="mt-0.5 tabular-nums text-[var(--color-text-muted)]">
+        {formatNumber(count)} {pressesLabel}
+      </div>
     </div>
   );
 }
