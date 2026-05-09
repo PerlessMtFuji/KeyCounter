@@ -1,76 +1,67 @@
 # KeyCounter
 
-Tiny desktop app that counts how much you bang on your keyboard and turns it into pretty charts. **Counts only — never content.**
+Desktop keystroke counter. Counts how many keys you press and shows it as a heatmap and a few charts. Counts only — never content.
 
-🇵🇱 [Polish version / wersja PL](README.pl.md)
+[Wersja PL](README.pl.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Tauri 2](https://img.shields.io/badge/Tauri-2-24C8DB)](https://v2.tauri.app)
 
 ---
 
-This is a fun project, not a product. I wanted to know how much I actually type in a day, didn't trust any of the existing trackers with that data, so I wrote one. It tracks **how many** keys you press — never **which** sequences, never the actual text. There is no cloud, no telemetry, no account. The whole thing is one local SQLite file you can delete any time.
+I wanted a number on my own typing without giving the data to anything online. The existing trackers either phoned home or wanted an account, so I wrote my own. The whole database is one local SQLite file. Delete it and the history is gone.
 
-## What it does
+The app stores per-key counters and per-minute totals. It doesn't store the actual characters, words, sequences, clipboard, window titles or anything else. There are no network calls in the codebase. Details in [docs/privacy.md](docs/privacy.md).
 
-- Live KPM with a little pulse on every keystroke
-- Keyboard heatmap (QWERTY / QWERTZ / Dvorak / Colemak)
-- Top keys for today / 7 days / 30 days / all time
-- Finger load (which finger is overworked under standard touch typing)
-- Day × hour punch card and a 365-day GitHub-style activity calendar
+## Features
+
+- Live KPM with a pulse on each keystroke
+- Keyboard heatmap (QWERTY, QWERTZ, Dvorak, Colemak)
+- Top keys for today, 7 days, 30 days, all time
+- Finger load under standard touch typing
+- Day × hour punch card and a 365-day activity calendar
 - Streaks, modifier mix, backspace ratio
-- Achievements with a celebration toast on every milestone
-- System tray (show / hide / pause / quit), autostart on login
-- Optional floating widget (full or compact pill)
+- Achievements
+- System tray with show / hide / pause / quit, autostart
+- Optional floating widget (full or compact pill, can snap to the taskbar)
 - JSON export, full-history reset
-- Dark mode by default, English + Polish
-
-## Privacy, in plain words
-
-The database stores per-key counters and per-minute totals. That's it. Even if it leaked, it would tell you that I pressed the letter `e` 4127 times today — not what I wrote with those `e`s. There are zero network calls in the entire codebase. Full breakdown in [docs/privacy.md](docs/privacy.md).
-
-## Heads up: your antivirus might yell
-
-Counting global keystrokes requires a low-level keyboard hook — the same OS primitive keyloggers use. Defender / SmartScreen / other AVs will sometimes flag unsigned builds because of that. The hook is one short file (`src-tauri/src/hook.rs`, ~50 lines) you can read top-to-bottom in a minute. Full story + how to verify the binary + how to whitelist: [docs/antivirus.md](docs/antivirus.md).
-
-A real code-signing cert costs more than I want to pay for a side project, so for now: unsigned. Sorry.
+- English + Polish, dark theme
 
 ## Install
 
-### Prebuilt
+Grab the installer from [Releases](../../releases). Each release has a `SHA256SUMS.txt` you can verify against.
 
-Grab a `.msi` / `.exe` for Windows (or `.dmg` / `.AppImage` for the others) from the [Releases page](../../releases). Every release includes a `SHA256SUMS.txt` so you can verify what you downloaded matches what GitHub Actions built.
+The Windows build is unsigned, so SmartScreen will complain on first run. Pick **More info → Run anyway**. A code-signing cert is too expensive for a side project.
 
 ### From source
 
-You'll need Node 20+ and Rust (via `rustup`). On Linux: see Tauri's [system deps](https://v2.tauri.app/start/prerequisites/#linux).
+Node 20+ and Rust (via `rustup`). On Linux you'll also need [Tauri's system deps](https://v2.tauri.app/start/prerequisites/#linux).
 
 ```bash
 git clone https://github.com/perlessmtfuji/keycounter.git
 cd keycounter
 npm install
 
-# Run the real desktop app in dev mode
-npm run tauri:dev
-
-# Or just the UI in a browser with mock data (preview only, no key tracking)
-npm run dev
-
-# Build installers for your OS
-npm run tauri:build
+npm run tauri:dev      # full app in dev mode
+npm run dev            # UI only, mocked data, no key tracking
+npm run tauri:build    # build installers
 ```
+
+## Antivirus
+
+Counting global keystrokes needs a low-level keyboard hook, which is the same OS primitive a keylogger uses. Defender and other AVs sometimes flag unsigned builds because of that. The hook itself is about 50 lines in [`src-tauri/src/hook.rs`](src-tauri/src/hook.rs) and never touches the actual keys pressed. Full write-up and how to verify in [docs/antivirus.md](docs/antivirus.md).
 
 ## Platforms
 
-Windows is the priority and the most polished. macOS and Linux builds come out of the same CI pipeline but are tested less.
+Windows is the priority and the most polished. macOS and Linux builds come out of the same CI pipeline but get less testing.
 
 | OS | Installer | Notes |
 |---|---|---|
-| Windows 10/11 | `.msi` / `.exe` | First run triggers SmartScreen — see antivirus doc |
-| macOS 11+ | `.dmg` | Needs Accessibility permission; first launch screen walks you through it |
-| Linux | `.AppImage` / `.deb` | X11 only (Wayland support is upstream of `rdev`) |
+| Windows 10/11 | `.msi` / `.exe` | SmartScreen on first run, see antivirus doc |
+| macOS 11+ | `.dmg` | Needs Accessibility permission, walked through on first launch |
+| Linux | `.AppImage` / `.deb` | X11 only — Wayland support depends on `rdev` |
 
-## Architecture, in one diagram
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -92,22 +83,22 @@ Windows is the priority and the most polished. macOS and Linux builds come out o
                           keycounter.db
 ```
 
-More detail in [docs/architecture.md](docs/architecture.md).
+More in [docs/architecture.md](docs/architecture.md).
 
-## Tech
+## Stack
 
-Tauri 2 (Rust + WebView), React 18 + TypeScript, Tailwind v4, Zustand, Framer Motion, hand-rolled SVG charts, `rdev` for the keyboard hook, `rusqlite` for storage. Final binary is ~10 MB, idle RAM around 50 MB.
+Tauri 2 (Rust + WebView), React 18 + TypeScript, Tailwind v4, Zustand, Framer Motion, hand-rolled SVG charts, `rdev` for the keyboard hook, `rusqlite` for storage. Final binary is around 10 MB, idle RAM around 50 MB.
 
-## A note on performance
+## Performance
 
-Tauri ships an embedded WebView2 (Edge Chromium) per app, and that WebView is doing the heavy lifting for the entire UI. While typing fast, expect a few percent CPU and a small amount of GPU. I optimized the worst offenders (no `backdrop-filter`, no per-frame animations, paused timers when hidden), but it's still a Chromium browser running underneath, so it won't ever match a native shell. If you want absolute zero overhead, this isn't the tracker for you.
+Tauri ships an embedded WebView2 (Edge Chromium) per app and that WebView runs the whole UI. While typing fast you can expect a few percent CPU and a small amount of GPU. The worst offenders are gone (no `backdrop-filter`, no per-frame animations, timers paused while hidden) but it's still Chromium underneath, so it won't match a native shell. If you want absolute zero overhead, this isn't the tracker for you.
 
 ## Status
 
-Effectively MVP-complete and frozen. The MVP set is in, this version is what it is. I might come back to it for a native-shell rewrite (Avalonia / Slint) some day, but no promises.
+Frozen at MVP. The feature set is what it is. A native-shell rewrite (Avalonia or Slint) is something I might do at some point, no promises.
 
-Things I'd add if I had infinite time: per-application stats, mouse counters, n-gram counts (codes, not text), Wayland support, Windows code signing.
+Things I'd add given infinite time: per-application stats, mouse counters, n-gram counts (codes, not text), Wayland support, a signed Windows build.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Use it, fork it, learn from it.
+MIT — see [LICENSE](LICENSE).
